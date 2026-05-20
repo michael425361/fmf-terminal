@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { X } from "lucide-react";
 import { useCommandPalette } from "@/providers/CommandPaletteProvider";
 import { useWatchlist } from "@/providers/WatchlistProvider";
@@ -18,9 +18,12 @@ import {
   parseCommand,
 } from "@/lib/command-palette/command-parser";
 import {
+  catalogEntriesToSearchResults,
   getEntriesByIds,
-  searchAssets,
 } from "@/lib/command-palette/search-engine";
+import { useMarketSearch } from "@/hooks/useMarketSearch";
+import { CHINA_A_SHARE_DEFS } from "@/lib/watchlist/china-a-shares";
+import { registerCatalogEntry, resolveCatalogEntry } from "@/lib/watchlist/catalog-registry";
 import {
   getRecentIds,
   loadRecentStore,
@@ -28,7 +31,6 @@ import {
   recordViewedAsset,
 } from "@/lib/command-palette/recent-store";
 import { resolveExchangeCode } from "@/lib/chart/header-metrics";
-import { CATALOG_BY_ID, resolveCatalogEntry } from "@/lib/watchlist/catalog";
 import { MARKET_SYMBOLS } from "@/lib/market-data/symbols";
 import type { SearchResultItem } from "@/lib/command-palette/types";
 import { SearchInput } from "./SearchInput";
@@ -36,6 +38,7 @@ import { ResultList } from "./ResultList";
 import { cn } from "@/lib/utils";
 
 export function CommandPalette() {
+  const locale = useLocale();
   const t = useTranslations("commandPalette");
   const tAssets = useTranslations("market.assets");
   const { open, closePalette } = useCommandPalette();
@@ -67,11 +70,19 @@ export function CommandPalette() {
         // skip missing keys
       }
     }
+    for (const def of CHINA_A_SHARE_DEFS) {
+      const id = `cn-${def.code}`;
+      try {
+        map[id] = tAssets(`${id}.name`);
+      } catch {
+        map[id] = locale === "zh" ? def.nameZh : def.nameEn;
+      }
+    }
     for (const item of items) {
       if (!map[item.id]) map[item.id] = item.name;
     }
     return map;
-  }, [tAssets, items]);
+  }, [tAssets, items, locale]);
 
   const favoriteIds = useMemo(
     () => new Set(items.map((i) => i.id)),
@@ -79,6 +90,12 @@ export function CommandPalette() {
   );
 
   const recentIds = useMemo(() => getRecentIds(recents), [recents]);
+
+  const { results: yahooResults, loading: searchLoading } = useMarketSearch({
+    query: searchQ,
+    enabled: open && searchQ.trim().length > 0,
+    limit: 24,
+  });
 
   const searchResults = useMemo((): SearchResultItem[] => {
     if (!searchQ.trim()) {
@@ -105,14 +122,12 @@ export function CommandPalette() {
       return [...favResults, ...recentResults].slice(0, 16);
     }
 
-    return searchAssets({
-      query: searchQ,
-      limit: 24,
-      localizedNames,
-      favoriteIds,
-      recentIds,
-    });
-  }, [searchQ, localizedNames, favoriteIds, recentIds, items]);
+    return catalogEntriesToSearchResults(
+      yahooResults,
+      searchQ,
+      localizedNames
+    );
+  }, [searchQ, localizedNames, favoriteIds, recentIds, items, yahooResults]);
 
   const flatResults = searchResults;
 
@@ -130,25 +145,36 @@ export function CommandPalette() {
   }, [debouncedQuery]);
 
   const resolveAndActivate = useCallback(
-    (ref: string) => {
-      const entry =
-        resolveCatalogEntry(ref) ??
-        CATALOG_BY_ID[ref] ??
-        searchAssets({
-          query: ref,
-          limit: 1,
-          localizedNames,
-          favoriteIds,
-        })[0]?.entry;
+    async (ref: string) => {
+      let entry = resolveCatalogEntry(ref);
+
+      if (!entry) {
+        try {
+          const res = await fetch(
+            `/api/market/search?q=${encodeURIComponent(ref)}&limit=1`,
+            { cache: "no-store" }
+          );
+          if (res.ok) {
+            const data = (await res.json()) as {
+              results: import("@/lib/watchlist/types").AssetCatalogEntry[];
+            };
+            entry = data.results?.[0];
+          }
+        } catch {
+          return false;
+        }
+      }
 
       if (!entry) return false;
+
+      registerCatalogEntry(entry);
 
       if (parsed.type === "watchlist-add") {
         if (!isFavorite(entry.id)) toggle(entry.id);
       } else if (parsed.type === "watchlist-remove") {
         if (isFavorite(entry.id)) toggle(entry.id);
       } else {
-        setActive(entry.id);
+        setActive(entry.id, entry);
       }
 
       recordViewedAsset(entry.id);
@@ -157,15 +183,7 @@ export function CommandPalette() {
       closePalette();
       return true;
     },
-    [
-      parsed.type,
-      localizedNames,
-      favoriteIds,
-      isFavorite,
-      toggle,
-      setActive,
-      closePalette,
-    ]
+    [parsed.type, isFavorite, toggle, setActive, closePalette]
   );
 
   const activateResult = useCallback(
@@ -173,12 +191,14 @@ export function CommandPalette() {
       const item = flatResults[index];
       if (!item) return;
 
+      registerCatalogEntry(item.entry);
+
       if (parsed.type === "watchlist-add") {
         if (!isFavorite(item.entry.id)) toggle(item.entry.id);
       } else if (parsed.type === "watchlist-remove") {
         if (isFavorite(item.entry.id)) toggle(item.entry.id);
       } else {
-        setActive(item.entry.id);
+        setActive(item.entry.id, item.entry);
       }
 
       recordViewedAsset(item.entry.id);
@@ -239,9 +259,11 @@ export function CommandPalette() {
   const handleToggleFavorite = useCallback(
     (id: string, e: React.MouseEvent) => {
       e.stopPropagation();
+      const item = flatResults.find((r) => r.entry.id === id);
+      if (item) registerCatalogEntry(item.entry);
       toggle(id);
     },
-    [toggle]
+    [flatResults, toggle]
   );
 
   const handleTogglePin = useCallback(
@@ -298,7 +320,11 @@ export function CommandPalette() {
           className="min-h-0 flex-1 overflow-y-auto scrollbar-thin"
           role="listbox"
         >
-          {flatResults.length === 0 ? (
+          {searchLoading && searchQ.trim() ? (
+            <p className="px-4 py-10 text-center text-xs text-[var(--muted)]">
+              {t("searching")}
+            </p>
+          ) : flatResults.length === 0 ? (
             <p className="px-4 py-10 text-center text-xs text-[var(--muted)]">
               {searchQ ? t("noResults") : t("emptyHint")}
             </p>
@@ -308,7 +334,8 @@ export function CommandPalette() {
                 <ResultList
                   results={flatResults.slice(0, favCount)}
                   selectedIndex={selectedIndex}
-                  onSelect={setSelectedIndex}
+                  onHighlight={setSelectedIndex}
+                  onActivate={activateResult}
                   onToggleFavorite={handleToggleFavorite}
                   onTogglePin={handleTogglePin}
                   isFavorite={isFavorite}
@@ -322,7 +349,8 @@ export function CommandPalette() {
                 <ResultList
                   results={recentOnly}
                   selectedIndex={selectedIndex}
-                  onSelect={setSelectedIndex}
+                  onHighlight={setSelectedIndex}
+                  onActivate={activateResult}
                   onToggleFavorite={handleToggleFavorite}
                   onTogglePin={handleTogglePin}
                   isFavorite={isFavorite}
@@ -337,7 +365,8 @@ export function CommandPalette() {
             <ResultList
               results={flatResults}
               selectedIndex={selectedIndex}
-              onSelect={setSelectedIndex}
+              onHighlight={setSelectedIndex}
+              onActivate={activateResult}
               onToggleFavorite={handleToggleFavorite}
               onTogglePin={handleTogglePin}
               isFavorite={isFavorite}

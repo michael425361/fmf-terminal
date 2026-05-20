@@ -23,6 +23,7 @@
     "placeholder": "搜索标的、指数、命令…",
     "close": "关闭",
     "noResults": "未找到匹配的标的或命令",
+    "searching": "正在搜索市场…",
     "emptyHint": "搜索全球市场，或尝试：chart AMD · open BTC · watchlist add NVDA",
     "sections": {
       "favorites": "自选",
@@ -70,6 +71,7 @@
     "searchPlaceholder": "搜索代码、名称或 ticker…",
     "searchHint": "可搜索美股、A股、港股、ETF、外汇、加密、大宗等",
     "noResults": "未找到匹配标的",
+    "searching": "正在搜索市场…",
     "symbol": "代码",
     "name": "名称",
     "last": "最新价",
@@ -232,7 +234,13 @@
       "cmd-copper": { "name": "铜期货" },
       "cmd-wheat": { "name": "小麦期货" },
       "cmd-corn": { "name": "玉米期货" },
-      "cmd-soy": { "name": "大豆期货" }
+      "cmd-soy": { "name": "大豆期货" },
+      "cn-600519": { "name": "贵州茅台" },
+      "cn-300750": { "name": "宁德时代" },
+      "cn-002594": { "name": "比亚迪" },
+      "cn-601318": { "name": "中国平安" },
+      "cn-510300": { "name": "沪深300ETF" },
+      "cn-159915": { "name": "创业板ETF" }
     }
   },
   "aiSummary": {

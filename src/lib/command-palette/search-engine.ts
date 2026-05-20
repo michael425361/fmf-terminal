@@ -1,4 +1,5 @@
-import { ASSET_CATALOG, CATALOG_BY_ID } from "@/lib/watchlist/catalog";
+import { ASSET_CATALOG } from "@/lib/watchlist/catalog";
+import { getCatalogEntryById } from "@/lib/watchlist/catalog-registry";
 import type { AssetCatalogEntry } from "@/lib/watchlist/types";
 import { resolveExchangeCode } from "@/lib/chart/header-metrics";
 import { ASSET_SEARCH_ALIASES, GLOBAL_QUERY_ALIASES } from "./aliases";
@@ -31,7 +32,7 @@ function fuzzyScore(query: string, target: string): number {
   return score + 10;
 }
 
-function highlightRanges(text: string, query: string): Array<[number, number]> {
+export function highlightRanges(text: string, query: string): Array<[number, number]> {
   const q = normalize(query);
   if (!q) return [];
   const lower = text.toLowerCase();
@@ -121,7 +122,7 @@ export function searchAssets(
   const q = normalize(query);
 
   const aliasId = q ? resolveAliasToId(q) : undefined;
-  const aliasEntry = aliasId ? CATALOG_BY_ID[aliasId] : undefined;
+  const aliasEntry = aliasId ? getCatalogEntryById(aliasId) : undefined;
 
   const recentIndex = new Map(recentIds.map((id, i) => [id, i]));
 
@@ -169,8 +170,27 @@ export function searchAssets(
   return scored.slice(0, limit);
 }
 
+export function catalogEntriesToSearchResults(
+  entries: AssetCatalogEntry[],
+  query: string,
+  localizedNames?: Record<string, string>
+): SearchResultItem[] {
+  const q = normalize(query);
+  return entries.map((entry, i) => {
+    const displayName = localizedNames?.[entry.id] ?? entry.name;
+    const highlightText = `${entry.shortLabel} ${displayName}`;
+    return {
+      entry,
+      score: 100 - i,
+      displayName,
+      exchange: resolveExchangeCode(entry),
+      highlights: highlightRanges(highlightText, q),
+    };
+  });
+}
+
 export function getEntriesByIds(ids: string[]): AssetCatalogEntry[] {
   return ids
-    .map((id) => CATALOG_BY_ID[id])
+    .map((id) => getCatalogEntryById(id))
     .filter((e): e is AssetCatalogEntry => Boolean(e));
 }

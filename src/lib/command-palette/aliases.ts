@@ -1,5 +1,7 @@
+import { getChinaAShareSearchAliases } from "@/lib/watchlist/china-a-shares";
+
 /** Maps catalog id → extra search tokens (EN/ZH aliases, typos) */
-export const ASSET_SEARCH_ALIASES: Record<string, string[]> = {
+const BASE_ASSET_SEARCH_ALIASES: Record<string, string[]> = {
   "us-gspc": ["spx", "s&p", "标普", "标普500"],
   "us-ixic": ["nasdaq", "ndx", "纳斯达克", "纳指"],
   "us-dji": ["dow", "djia", "道琼斯"],
@@ -27,8 +29,12 @@ export const ASSET_SEARCH_ALIASES: Record<string, string[]> = {
   "us-amd": ["amd", "超微"],
   "us-nvda": ["nvda", "英伟达"],
   "us-tsla": ["tsla", "特斯拉"],
-  "cn-600519": ["moutai", "茅台", "贵州茅台", "600519"],
   "hk-0700": ["tencent", "腾讯", "0700"],
+};
+
+export const ASSET_SEARCH_ALIASES: Record<string, string[]> = {
+  ...BASE_ASSET_SEARCH_ALIASES,
+  ...getChinaAShareSearchAliases(),
 };
 
 /** Global alias → catalog id */
@@ -45,4 +51,10 @@ export const GLOBAL_QUERY_ALIASES: Record<string, string> = {
   创业板: "cn-chinext",
   恒生: "hk-hsi",
   茅台: "cn-600519",
+  贵州茅台: "cn-600519",
+  比亚迪: "cn-002594",
+  宁德时代: "cn-300750",
+  中国平安: "cn-601318",
+  创业板etf: "cn-159915",
+  沪深300: "cn-510300",
 };

@@ -1,4 +1,6 @@
+import { searchChinaAShares } from "@/lib/market-data/china-a-share-search";
 import { MARKET_SYMBOLS } from "@/lib/market-data/symbols";
+import { CHINA_A_SHARE_CATALOG } from "./china-a-shares";
 import type { AssetCatalogEntry } from "./types";
 
 const EXTRA_ASSETS: AssetCatalogEntry[] = [
@@ -51,15 +53,6 @@ const EXTRA_ASSETS: AssetCatalogEntry[] = [
     category: "hk",
     priceDecimals: 2,
   },
-  {
-    id: "cn-600519",
-    symbol: "600519.SS",
-    shortLabel: "600519",
-    name: "Kweichow Moutai",
-    assetType: "cn_stock",
-    category: "china",
-    priceDecimals: 2,
-  },
 ];
 
 function macroToCatalog(): AssetCatalogEntry[] {
@@ -98,6 +91,7 @@ function mapCategoryToAssetType(
 
 export const ASSET_CATALOG: AssetCatalogEntry[] = [
   ...EXTRA_ASSETS,
+  ...CHINA_A_SHARE_CATALOG,
   ...macroToCatalog(),
 ];
 
@@ -110,25 +104,23 @@ export const CATALOG_BY_SYMBOL = Object.fromEntries(
 ) as Record<string, AssetCatalogEntry>;
 
 export function searchCatalog(query: string, limit = 12): AssetCatalogEntry[] {
-  const q = query.trim().toLowerCase();
+  const q = query.trim();
   if (!q) return [];
 
-  return ASSET_CATALOG.filter(
+  const cn = searchChinaAShares(q, limit).map((r) => r.entry);
+  if (cn.length >= limit) return cn;
+
+  const qLower = q.toLowerCase();
+  const rest = ASSET_CATALOG.filter(
     (a) =>
-      a.symbol.toLowerCase().includes(q) ||
-      a.shortLabel.toLowerCase().includes(q) ||
-      a.name.toLowerCase().includes(q) ||
-      a.id.toLowerCase().includes(q)
-  ).slice(0, limit);
+      !cn.some((c) => c.id === a.id) &&
+      (a.symbol.toLowerCase().includes(qLower) ||
+        a.shortLabel.toLowerCase().includes(qLower) ||
+        a.name.toLowerCase().includes(qLower) ||
+        a.id.toLowerCase().includes(qLower))
+  ).slice(0, limit - cn.length);
+
+  return [...cn, ...rest];
 }
 
-export function resolveCatalogEntry(
-  symbolOrId: string
-): AssetCatalogEntry | undefined {
-  const key = symbolOrId.trim();
-  return (
-    CATALOG_BY_ID[key] ??
-    CATALOG_BY_SYMBOL[key.toUpperCase()] ??
-    CATALOG_BY_SYMBOL[key]
-  );
-}
+export { resolveCatalogEntry, registerCatalogEntry } from "./catalog-registry";

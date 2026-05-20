@@ -31,8 +31,9 @@ export function FavoriteButton({
       type="button"
       onClick={(e) => {
         e.stopPropagation();
+        if (!favorited) onToggle?.(true);
         toggle(assetId);
-        onToggle?.(!favorited);
+        if (favorited) onToggle?.(false);
       }}
       className={cn(
         "group/fav inline-flex items-center gap-1 rounded border border-transparent px-1 py-0.5 transition",

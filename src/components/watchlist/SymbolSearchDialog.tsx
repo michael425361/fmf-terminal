@@ -1,13 +1,14 @@
 "use client";
 
 import { Search, X } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
-import { searchCatalog } from "@/lib/watchlist/catalog";
+import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import { useMarketSearch } from "@/hooks/useMarketSearch";
+import { getChinaAShareDef } from "@/lib/watchlist/china-a-shares";
+import { registerCatalogEntry } from "@/lib/watchlist/catalog-registry";
 import type { AssetCatalogEntry } from "@/lib/watchlist/types";
 import { useWatchlist } from "@/providers/WatchlistProvider";
 import { FavoriteButton } from "./FavoriteButton";
-import { cn } from "@/lib/utils";
 
 interface SymbolSearchDialogProps {
   open: boolean;
@@ -16,22 +17,27 @@ interface SymbolSearchDialogProps {
 
 export function SymbolSearchDialog({ open, onClose }: SymbolSearchDialogProps) {
   const t = useTranslations("personalWatchlist");
+  const locale = useLocale();
+
+  const displayName = (entry: AssetCatalogEntry) => {
+    const cn = getChinaAShareDef(entry.id);
+    if (cn) return locale === "zh" ? cn.nameZh : cn.nameEn;
+    return entry.name;
+  };
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<AssetCatalogEntry[]>([]);
   const { setActive } = useWatchlist();
 
-  const runSearch = useCallback((q: string) => {
-    setResults(searchCatalog(q, 16));
-  }, []);
+  const { results, loading } = useMarketSearch({
+    query,
+    enabled: open,
+    limit: 16,
+  });
 
   useEffect(() => {
     if (!open) {
       setQuery("");
-      setResults([]);
-      return;
     }
-    runSearch(query);
-  }, [open, query, runSearch]);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -41,6 +47,12 @@ export function SymbolSearchDialog({ open, onClose }: SymbolSearchDialogProps) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
+
+  const selectEntry = (entry: AssetCatalogEntry) => {
+    registerCatalogEntry(entry);
+    setActive(entry.id, entry);
+    onClose();
+  };
 
   if (!open) return null;
 
@@ -72,7 +84,11 @@ export function SymbolSearchDialog({ open, onClose }: SymbolSearchDialogProps) {
         </div>
 
         <ul className="max-h-[360px] overflow-auto">
-          {results.length === 0 ? (
+          {loading && query.trim() ? (
+            <li className="px-4 py-8 text-center text-xs text-[var(--muted)]">
+              {t("searching")}
+            </li>
+          ) : results.length === 0 ? (
             <li className="px-4 py-8 text-center text-xs text-[var(--muted)]">
               {query ? t("noResults") : t("searchHint")}
             </li>
@@ -85,21 +101,22 @@ export function SymbolSearchDialog({ open, onClose }: SymbolSearchDialogProps) {
                 <button
                   type="button"
                   className="min-w-0 flex-1 text-left"
-                  onClick={() => {
-                    setActive(entry.id);
-                    onClose();
-                  }}
+                  onClick={() => selectEntry(entry)}
                 >
                   <div className="font-mono text-xs font-semibold text-[var(--accent)]">
                     {entry.shortLabel}
                   </div>
                   <div className="truncate text-[10px] text-[var(--muted)]">
-                    {entry.name}
+                    {displayName(entry)}
                     <span className="mx-1">·</span>
                     <span className="font-mono">{entry.symbol}</span>
                   </div>
                 </button>
-                <FavoriteButton assetId={entry.id} showLabel />
+                <FavoriteButton
+                  assetId={entry.id}
+                  showLabel
+                  onToggle={() => registerCatalogEntry(entry)}
+                />
               </li>
             ))
           )}

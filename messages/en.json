@@ -23,6 +23,7 @@
     "placeholder": "Search symbols, indexes, commands…",
     "close": "Close",
     "noResults": "No matching assets or commands",
+    "searching": "Searching markets…",
     "emptyHint": "Search global markets or try: chart AMD · open BTC · watchlist add NVDA",
     "sections": {
       "favorites": "Favorites",
@@ -70,6 +71,7 @@
     "searchPlaceholder": "Search symbol, name, or ticker…",
     "searchHint": "Type to search US stocks, A-shares, HK, ETFs, FX, crypto, commodities…",
     "noResults": "No matching symbols",
+    "searching": "Searching markets…",
     "symbol": "Symbol",
     "name": "Name",
     "last": "Last",
@@ -232,7 +234,13 @@
       "cmd-copper": { "name": "Copper Futures" },
       "cmd-wheat": { "name": "Wheat Futures" },
       "cmd-corn": { "name": "Corn Futures" },
-      "cmd-soy": { "name": "Soybean Futures" }
+      "cmd-soy": { "name": "Soybean Futures" },
+      "cn-600519": { "name": "Kweichow Moutai" },
+      "cn-300750": { "name": "CATL" },
+      "cn-002594": { "name": "BYD" },
+      "cn-601318": { "name": "Ping An Insurance" },
+      "cn-510300": { "name": "CSI 300 ETF" },
+      "cn-159915": { "name": "ChiNext ETF" }
     }
   },
   "aiSummary": {

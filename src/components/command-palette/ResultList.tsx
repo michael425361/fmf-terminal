@@ -17,7 +17,10 @@ import { cn } from "@/lib/utils";
 interface ResultListProps {
   results: SearchResultItem[];
   selectedIndex: number;
-  onSelect: (index: number) => void;
+  /** Keyboard/mouse highlight only */
+  onHighlight: (index: number) => void;
+  /** User confirmed selection (click or Enter) */
+  onActivate: (index: number) => void;
   onToggleFavorite: (id: string, e: React.MouseEvent) => void;
   onTogglePin: (id: string, e: React.MouseEvent) => void;
   isFavorite: (id: string) => boolean;
@@ -32,7 +35,8 @@ function ResultRow({
   globalIndex,
   selected,
   quote,
-  onSelect,
+  onHighlight,
+  onActivate,
   onToggleFavorite,
   onTogglePin,
   favorited,
@@ -43,7 +47,8 @@ function ResultRow({
   globalIndex: number;
   selected: boolean;
   quote?: MarketQuote;
-  onSelect: (index: number) => void;
+  onHighlight: (index: number) => void;
+  onActivate: (index: number) => void;
   onToggleFavorite: (id: string, e: React.MouseEvent) => void;
   onTogglePin: (id: string, e: React.MouseEvent) => void;
   favorited: boolean;
@@ -59,8 +64,8 @@ function ResultRow({
         role="option"
         aria-selected={selected}
         id={`command-result-${globalIndex}`}
-        onMouseEnter={() => onSelect(globalIndex)}
-        onClick={() => onSelect(globalIndex)}
+        onMouseEnter={() => onHighlight(globalIndex)}
+        onClick={() => onActivate(globalIndex)}
         className={cn(
           "command-result-row group flex cursor-pointer items-center gap-2 px-3 py-2.5 transition-all duration-150",
           selected && "command-result-selected"
@@ -152,7 +157,8 @@ function ResultRow({
 function ResultListInner({
   results,
   selectedIndex,
-  onSelect,
+  onHighlight,
+  onActivate,
   onToggleFavorite,
   onTogglePin,
   isFavorite,
@@ -188,7 +194,8 @@ function ResultListInner({
               globalIndex={globalIndex}
               selected={selectedIndex === globalIndex}
               quote={getQuote(item.entry.id)}
-              onSelect={onSelect}
+              onHighlight={onHighlight}
+              onActivate={onActivate}
               onToggleFavorite={onToggleFavorite}
               onTogglePin={onTogglePin}
               favorited={isFavorite(item.entry.id)}

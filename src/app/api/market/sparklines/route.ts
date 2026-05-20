@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSparklinesForSymbols } from "@/lib/market-data/service";
-import { CATALOG_BY_ID } from "@/lib/watchlist/catalog";
+import { getCatalogEntryById } from "@/lib/watchlist/catalog-registry";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const ids = searchParams.get("ids")?.split(",").filter(Boolean) ?? [];
 
   const symbols = ids
-    .map((id) => CATALOG_BY_ID[id]?.symbol)
+    .map((id) => getCatalogEntryById(id)?.symbol)
     .filter((s): s is string => Boolean(s));
 
   if (symbols.length === 0) {
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     const sparklines = await getSparklinesForSymbols(symbols);
     const byId: Record<string, number[]> = {};
     ids.forEach((id) => {
-      const sym = CATALOG_BY_ID[id]?.symbol;
+      const sym = getCatalogEntryById(id)?.symbol;
       if (sym && sparklines[sym]) {
         byId[id] = sparklines[sym];
       }

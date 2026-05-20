@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getQuotesForSymbols } from "@/lib/market-data/service";
-import { CATALOG_BY_ID } from "@/lib/watchlist/catalog";
+import { getCatalogEntryById } from "@/lib/watchlist/catalog-registry";
 import { catalogToMarketDef } from "@/lib/watchlist/market-bridge";
 
 export const dynamic = "force-dynamic";
@@ -14,8 +14,8 @@ export async function GET(request: Request) {
   }
 
   const definitions = ids
-    .map((id) => CATALOG_BY_ID[id])
-    .filter(Boolean)
+    .map((id) => getCatalogEntryById(id))
+    .filter((e): e is NonNullable<typeof e> => Boolean(e))
     .map(catalogToMarketDef);
 
   try {

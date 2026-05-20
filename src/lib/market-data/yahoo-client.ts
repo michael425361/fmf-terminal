@@ -231,6 +231,46 @@ export function resolveDefinition(
   return SYMBOL_BY_YAHOO[symbol];
 }
 
+export interface YahooSearchOptions {
+  quotesCount?: number;
+  newsCount?: number;
+  lang?: string;
+  region?: string;
+}
+
+/** Search Yahoo Finance by ticker or company name. */
+export async function searchYahooSymbols(
+  query: string,
+  options: YahooSearchOptions = {}
+): Promise<YahooQuoteResult[]> {
+  const q = query.trim();
+  if (!q) return [];
+
+  const yf = getYahooClient();
+
+  try {
+    const result = await yf.search(q, {
+      quotesCount: options.quotesCount ?? 12,
+      newsCount: options.newsCount ?? 0,
+      lang: options.lang ?? "en-US",
+      region: options.region ?? "US",
+    });
+
+    const quotes = result.quotes ?? [];
+    const out: YahooQuoteResult[] = [];
+    for (const item of quotes) {
+      if (item == null || typeof item !== "object") continue;
+      const row = item as YahooQuoteResult & { isYahooFinance?: boolean };
+      if (typeof row.symbol !== "string" || !row.symbol.trim()) continue;
+      if (row.isYahooFinance === false) continue;
+      out.push(row);
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 /** Lightweight intraday closes for sparklines (last ~24 points). */
 export async function fetchYahooSparklines(
   symbols: string[]
