@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <radialGradient id="g" cx="50%" cy="38%" r="65%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="45%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#92400e"/>
+    </radialGradient>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="#0a0c10" stroke="url(#g)" stroke-width="2.5"/>
+  <text x="32" y="38" text-anchor="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="url(#g)">FMF</text>
+</svg>

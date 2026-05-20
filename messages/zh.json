@@ -1,0 +1,312 @@
+{
+  "metadata": {
+    "title": "FMF Terminal — 为我的财富而生",
+    "description": "FMF 机构级市场终端 — AI 驱动的全球金融情报平台。"
+  },
+  "brand": {
+    "terminal": "TERMINAL",
+    "tagline": "为我的财富而生",
+    "name": "FMF 终端",
+    "loading": {
+      "init": "正在初始化市场系统…",
+      "feeds": "正在连接行情数据源…",
+      "ai": "正在加载 AI 分析引擎…"
+    }
+  },
+  "header": {
+    "portfolio": "投资组合",
+    "dayPnl": "当日盈亏",
+    "search": "搜索标的…"
+  },
+  "commandPalette": {
+    "title": "命令面板",
+    "placeholder": "搜索标的、指数、命令…",
+    "close": "关闭",
+    "noResults": "未找到匹配的标的或命令",
+    "emptyHint": "搜索全球市场，或尝试：chart AMD · open BTC · watchlist add NVDA",
+    "sections": {
+      "favorites": "自选",
+      "recents": "最近",
+      "results": "结果"
+    },
+    "category": {
+      "us_stock": "股票",
+      "cn_stock": "A股",
+      "hk_stock": "港股",
+      "etf": "ETF",
+      "index": "指数",
+      "forex": "外汇",
+      "crypto": "加密",
+      "commodity": "大宗"
+    },
+    "actions": {
+      "addWatchlist": "加入自选",
+      "removeWatchlist": "移出自选",
+      "pin": "置顶",
+      "unpin": "取消置顶"
+    },
+    "footer": {
+      "commands": "chart AMD · open BTC · watchlist add NVDA · switch Gold",
+      "navigate": "导航",
+      "open": "打开",
+      "complete": "补全"
+    }
+  },
+  "nav": {
+    "dashboard": "仪表盘",
+    "charts": "图表",
+    "portfolio": "持仓",
+    "journal": "交易日记",
+    "calendar": "日历",
+    "analytics": "分析"
+  },
+  "personalWatchlist": {
+    "title": "我的自选",
+    "detailTitle": "行情详情",
+    "empty": "自选列表为空。使用搜索和星标按钮添加标的。",
+    "addToWatchlist": "加入自选",
+    "removeFromWatchlist": "移出自选",
+    "favorited": "已收藏",
+    "searchPlaceholder": "搜索代码、名称或 ticker…",
+    "searchHint": "可搜索美股、A股、港股、ETF、外汇、加密、大宗等",
+    "noResults": "未找到匹配标的",
+    "symbol": "代码",
+    "name": "名称",
+    "last": "最新价",
+    "change": "涨跌",
+    "changePct": "涨跌幅",
+    "type": "类型",
+    "aiContext": {
+      "bullish": "偏多",
+      "bearish": "偏空",
+      "neutral": "中性",
+      "focus": "焦点",
+      "bullet1": "当前焦点：{name}（{symbol}）— 关注日内结构与宏观驱动。",
+      "bullet2": "最新价 {price}（{change}）— 关注成交量确认及关键支撑/阻力。",
+      "bullet2pending": "正在等待该标的实时报价。",
+      "bullet3": "跨资产：关注美元、利率及板块相关性以确认方向。",
+      "bulletDefault": "点击自选标的以聚焦 AI 分析上下文。"
+    }
+  },
+  "watchlist": {
+    "title": "自选列表",
+    "symbol": "代码",
+    "class": "类别",
+    "last": "最新价",
+    "change": "涨跌幅"
+  },
+  "chart": {
+    "live": "1日 · 实时"
+  },
+  "tickerBar": {
+    "navLabel": "全球市场导航",
+    "range": "日内区间",
+    "volume": "成交量",
+    "session": "交易时段",
+    "selectHint": "按 Enter 加载图表"
+  },
+  "tradingChart": {
+    "noSymbol": "请从自选列表选择标的",
+    "noData": "暂无图表数据",
+    "error": "图表加载失败",
+    "timeframe": {
+      "1D": "1日",
+      "5D": "5日",
+      "1M": "1月",
+      "3M": "3月",
+      "6M": "6月",
+      "1Y": "1年"
+    },
+    "type": {
+      "candle": "K线",
+      "area": "面积",
+      "line": "折线"
+    },
+    "ind": {
+      "volume": "成交量"
+    },
+    "status": {
+      "open": "交易中",
+      "closed": "已收盘",
+      "pre": "盘前",
+      "post": "盘后"
+    },
+    "ohlc": {
+      "o": "开",
+      "h": "高",
+      "l": "低",
+      "c": "收",
+      "v": "量"
+    },
+    "header": {
+      "live": "实时行情",
+      "updated": "更新于",
+      "session": {
+        "live": "实时",
+        "pre": "盘前",
+        "ah": "盘后",
+        "closed": "休市"
+      },
+      "status": {
+        "open": "交易中",
+        "closed": "已收盘",
+        "pre": "盘前交易",
+        "post": "盘后交易"
+      },
+      "assetCategory": {
+        "us_stock": "美股",
+        "cn_stock": "A股",
+        "hk_stock": "港股",
+        "etf": "ETF",
+        "index": "指数",
+        "forex": "外汇",
+        "crypto": "加密货币",
+        "commodity": "大宗商品"
+      },
+      "metrics": {
+        "open": "开盘",
+        "high": "最高",
+        "low": "最低",
+        "prevClose": "昨收",
+        "volume": "成交量",
+        "marketCap": "市值",
+        "pe": "市盈率",
+        "earnings": "财报日",
+        "volume24h": "24小时量",
+        "dominance": "市占率",
+        "contractMonth": "合约月",
+        "openInterest": "持仓量",
+        "dailyRange": "日内区间",
+        "session": "交易时段"
+      },
+      "tooltips": {
+        "open": "本交易时段开盘价",
+        "high": "本时段最高价",
+        "low": "本时段最低价",
+        "prevClose": "上一交易日收盘价",
+        "volume": "本时段成交量",
+        "marketCap": "总市值",
+        "pe": "市盈率（TTM）"
+      }
+    }
+  },
+  "market": {
+    "macroTitle": "全球宏观",
+    "loading": "正在加载行情…",
+    "lastUpdate": "更新于",
+    "stale": "延迟",
+    "partialError": "部分数据异常",
+    "error": "行情数据不可用，请检查网络后重试。",
+    "retry": "重试",
+    "refresh": "刷新",
+    "categories": {
+      "us": "美国",
+      "china": "中国",
+      "hk": "香港",
+      "fx": "外汇 / 宏观",
+      "crypto": "加密货币",
+      "commodities": "大宗商品"
+    },
+    "assets": {
+      "us-gspc": { "name": "标普500指数" },
+      "us-ixic": { "name": "纳斯达克综合指数" },
+      "us-dji": { "name": "道琼斯工业平均指数" },
+      "us-rut": { "name": "罗素2000指数" },
+      "us-vix": { "name": "VIX 波动率指数" },
+      "cn-shcomp": { "name": "上证综合指数" },
+      "cn-szcomp": { "name": "深证成份指数" },
+      "cn-chinext": { "name": "创业板指数" },
+      "hk-hsi": { "name": "恒生指数" },
+      "fx-dxy": { "name": "美元指数 (DXY)" },
+      "fx-eurusd": { "name": "欧元/美元" },
+      "fx-usdjpy": { "name": "美元/日元" },
+      "fx-audusd": { "name": "澳元/美元" },
+      "fx-usdcnh": { "name": "美元/离岸人民币" },
+      "crypto-btc": { "name": "比特币美元" },
+      "crypto-eth": { "name": "以太坊美元" },
+      "cmd-gold": { "name": "黄金期货" },
+      "cmd-silver": { "name": "白银期货" },
+      "cmd-wti": { "name": "WTI 原油期货" },
+      "cmd-brent": { "name": "布伦特原油期货" },
+      "cmd-ng": { "name": "天然气期货" },
+      "cmd-copper": { "name": "铜期货" },
+      "cmd-wheat": { "name": "小麦期货" },
+      "cmd-corn": { "name": "玉米期货" },
+      "cmd-soy": { "name": "大豆期货" }
+    }
+  },
+  "aiSummary": {
+    "title": "AI 市场摘要",
+    "sentiment": "市场情绪",
+    "confidence": "置信度",
+    "disclaimer": "模拟 AI 输出，不构成投资建议。后续版本可接入 OpenAI API 生成实时摘要。"
+  },
+  "calendar": {
+    "title": "经济日历",
+    "today": "今日",
+    "prev": "前值",
+    "forecast": "预期",
+    "actual": "公布"
+  },
+  "impact": {
+    "high": "高",
+    "medium": "中",
+    "low": "低"
+  },
+  "assetClass": {
+    "us_equity": "美股",
+    "cn_equity": "A股",
+    "options": "期权",
+    "forex": "外汇",
+    "commodity": "大宗",
+    "crypto": "加密"
+  },
+  "language": {
+    "label": "语言",
+    "en": "EN",
+    "zh": "中文"
+  },
+  "mock": {
+    "topBar": {
+      "SPY": { "name": "标普500 ETF" },
+      "QQQ": { "name": "纳斯达克100 ETF" },
+      "BTC": { "name": "比特币" },
+      "GOLD": { "name": "黄金期货" },
+      "VIX": { "name": "波动率指数" }
+    },
+    "watchlist": {
+      "AAPL": { "name": "苹果公司" },
+      "NVDA": { "name": "英伟达" },
+      "600519": { "name": "贵州茅台" },
+      "SPX 5200C": { "name": "6月标普看涨期权" },
+      "EUR/USD": { "name": "欧元/美元" },
+      "CL": { "name": "WTI 原油" },
+      "ETH": { "name": "以太坊" },
+      "TSLA": { "name": "特斯拉" }
+    },
+    "ai": {
+      "generatedAt": "2026-05-20 09:35 美东",
+      "sentiment": "谨慎看多",
+      "bullets": {
+        "0": "美股高开，CPI 预期偏软；科技板块领涨，半导体表现突出。",
+        "1": "VIX 走低显示短期风险偏好；宏观意外时需关注 14.5 反转信号。",
+        "2": "BTC 站稳 6.6 万美元上方，ETF 资金流入稳定；与纳斯达克相关性仍高。",
+        "3": "黄金在 2350 美元附近持稳，美元小幅走弱；中东局势支撑油价。",
+        "4": "今日风险：14:00 美东 FOMC 会议纪要 — 数据公布前避免重仓。"
+      },
+      "highlights": {
+        "breadth": { "label": "市场广度", "value": "上涨家数 62%" },
+        "sectorLead": { "label": "领涨板块", "value": "科技 +1.1%" },
+        "fx": { "label": "外汇", "value": "DXY -0.12%" },
+        "rates": { "label": "利率", "value": "10年期 4.28% (-2bp)" }
+      }
+    },
+    "calendar": {
+      "1": { "event": "初请失业金人数" },
+      "2": { "event": "成屋销售" },
+      "3": { "event": "FOMC 会议纪要" },
+      "4": { "event": "1年期贷款市场报价利率" },
+      "5": { "event": "欧洲央行行长拉加德讲话" }
+    }
+  }
+}

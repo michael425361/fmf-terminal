@@ -1,0 +1,29 @@
+{
+  "id": "https://www.fmfterminal.com/",
+  "name": "FMF Terminal — For My Finance",
+  "short_name": "FMF",
+  "description": "AI-powered institutional market terminal for global finance. FMF = For My Finance.",
+  "start_url": "https://www.fmfterminal.com/en",
+  "scope": "https://www.fmfterminal.com/",
+  "display": "standalone",
+  "background_color": "#0a0c10",
+  "theme_color": "#0a0c10",
+  "orientation": "any",
+  "lang": "en-AU",
+  "dir": "ltr",
+  "categories": ["finance", "business", "productivity"],
+  "icons": [
+    {
+      "src": "/brand/fmf-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/brand/fmf-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

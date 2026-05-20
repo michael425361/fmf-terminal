@@ -1,0 +1,312 @@
+{
+  "metadata": {
+    "title": "FMF Terminal — For My Finance",
+    "description": "AI-powered institutional market terminal for global finance — For My Finance."
+  },
+  "brand": {
+    "terminal": "TERMINAL",
+    "tagline": "For My Finance",
+    "name": "FMF Terminal",
+    "loading": {
+      "init": "Initializing Market Systems...",
+      "feeds": "Connecting Market Feeds...",
+      "ai": "Loading AI Intelligence..."
+    }
+  },
+  "header": {
+    "portfolio": "Portfolio",
+    "dayPnl": "Day P&L",
+    "search": "Search symbols…"
+  },
+  "commandPalette": {
+    "title": "Command Palette",
+    "placeholder": "Search symbols, indexes, commands…",
+    "close": "Close",
+    "noResults": "No matching assets or commands",
+    "emptyHint": "Search global markets or try: chart AMD · open BTC · watchlist add NVDA",
+    "sections": {
+      "favorites": "Favorites",
+      "recents": "Recent",
+      "results": "Results"
+    },
+    "category": {
+      "us_stock": "Stock",
+      "cn_stock": "A-Share",
+      "hk_stock": "HK",
+      "etf": "ETF",
+      "index": "Index",
+      "forex": "FX",
+      "crypto": "Crypto",
+      "commodity": "Cmdty"
+    },
+    "actions": {
+      "addWatchlist": "Add to watchlist",
+      "removeWatchlist": "Remove from watchlist",
+      "pin": "Pin to top",
+      "unpin": "Unpin"
+    },
+    "footer": {
+      "commands": "chart AMD · open BTC · watchlist add NVDA · switch Gold",
+      "navigate": "navigate",
+      "open": "open",
+      "complete": "complete"
+    }
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "charts": "Charts",
+    "portfolio": "Portfolio",
+    "journal": "Journal",
+    "calendar": "Calendar",
+    "analytics": "Analytics"
+  },
+  "personalWatchlist": {
+    "title": "My Watchlist",
+    "detailTitle": "Market Detail",
+    "empty": "No symbols in your watchlist. Search and add assets with the star button.",
+    "addToWatchlist": "Add to Watchlist",
+    "removeFromWatchlist": "Remove from Watchlist",
+    "favorited": "In Watchlist",
+    "searchPlaceholder": "Search symbol, name, or ticker…",
+    "searchHint": "Type to search US stocks, A-shares, HK, ETFs, FX, crypto, commodities…",
+    "noResults": "No matching symbols",
+    "symbol": "Symbol",
+    "name": "Name",
+    "last": "Last",
+    "change": "Change",
+    "changePct": "Chg %",
+    "type": "Type",
+    "aiContext": {
+      "bullish": "Bullish bias",
+      "bearish": "Bearish bias",
+      "neutral": "Neutral",
+      "focus": "Focus",
+      "bullet1": "Active context: {name} ({symbol}) — intraday structure and macro drivers in focus.",
+      "bullet2": "Last {price} ({change}) — monitor volume confirmation and key support/resistance.",
+      "bullet2pending": "Awaiting live quote for active symbol.",
+      "bullet3": "Cross-asset: watch USD, rates, and sector correlation for confirmation.",
+      "bulletDefault": "Select a watchlist symbol to focus AI context."
+    }
+  },
+  "watchlist": {
+    "title": "Watchlist",
+    "symbol": "Symbol",
+    "class": "Class",
+    "last": "Last",
+    "change": "Chg%"
+  },
+  "chart": {
+    "live": "1D · Live"
+  },
+  "tickerBar": {
+    "navLabel": "Global markets navigation",
+    "range": "Day range",
+    "volume": "Volume",
+    "session": "Session",
+    "selectHint": "Enter to load chart"
+  },
+  "tradingChart": {
+    "noSymbol": "Select a symbol from your watchlist",
+    "noData": "No chart data available",
+    "error": "Chart error",
+    "timeframe": {
+      "1D": "1D",
+      "5D": "5D",
+      "1M": "1M",
+      "3M": "3M",
+      "6M": "6M",
+      "1Y": "1Y"
+    },
+    "type": {
+      "candle": "Candles",
+      "area": "Area",
+      "line": "Line"
+    },
+    "ind": {
+      "volume": "Vol"
+    },
+    "status": {
+      "open": "Open",
+      "closed": "Closed",
+      "pre": "Pre-Mkt",
+      "post": "After-Hrs"
+    },
+    "ohlc": {
+      "o": "O",
+      "h": "H",
+      "l": "L",
+      "c": "C",
+      "v": "Vol"
+    },
+    "header": {
+      "live": "Live market data",
+      "updated": "Updated",
+      "session": {
+        "live": "LIVE",
+        "pre": "PRE",
+        "ah": "AH",
+        "closed": "CLOSED"
+      },
+      "status": {
+        "open": "Market Open",
+        "closed": "Market Closed",
+        "pre": "Pre-Market",
+        "post": "After Hours"
+      },
+      "assetCategory": {
+        "us_stock": "US Equity",
+        "cn_stock": "A-Share",
+        "hk_stock": "HK Equity",
+        "etf": "ETF",
+        "index": "Index",
+        "forex": "Forex",
+        "crypto": "Crypto",
+        "commodity": "Commodity"
+      },
+      "metrics": {
+        "open": "Open",
+        "high": "High",
+        "low": "Low",
+        "prevClose": "Prev Close",
+        "volume": "Volume",
+        "marketCap": "Mkt Cap",
+        "pe": "P/E",
+        "earnings": "Earnings",
+        "volume24h": "24h Vol",
+        "dominance": "Dominance",
+        "contractMonth": "Contract",
+        "openInterest": "Open Int",
+        "dailyRange": "Day Range",
+        "session": "Session"
+      },
+      "tooltips": {
+        "open": "Official session opening price",
+        "high": "Session high — highest traded price",
+        "low": "Session low — lowest traded price",
+        "prevClose": "Previous session closing price",
+        "volume": "Shares or contracts traded this session",
+        "marketCap": "Total market capitalization",
+        "pe": "Trailing price-to-earnings ratio"
+      }
+    }
+  },
+  "market": {
+    "macroTitle": "Global Macro",
+    "loading": "Loading market data…",
+    "lastUpdate": "Updated",
+    "stale": "stale",
+    "partialError": "Partial feed",
+    "error": "Market data unavailable. Check connection and retry.",
+    "retry": "Retry",
+    "refresh": "Refresh",
+    "categories": {
+      "us": "United States",
+      "china": "China",
+      "hk": "Hong Kong",
+      "fx": "FX / Macro",
+      "crypto": "Crypto",
+      "commodities": "Commodities"
+    },
+    "assets": {
+      "us-gspc": { "name": "S&P 500 Index" },
+      "us-ixic": { "name": "NASDAQ Composite" },
+      "us-dji": { "name": "Dow Jones Industrial Average" },
+      "us-rut": { "name": "Russell 2000" },
+      "us-vix": { "name": "CBOE Volatility Index" },
+      "cn-shcomp": { "name": "Shanghai Composite Index" },
+      "cn-szcomp": { "name": "Shenzhen Component Index" },
+      "cn-chinext": { "name": "ChiNext Index" },
+      "hk-hsi": { "name": "Hang Seng Index" },
+      "fx-dxy": { "name": "US Dollar Index (DXY)" },
+      "fx-eurusd": { "name": "Euro / US Dollar" },
+      "fx-usdjpy": { "name": "US Dollar / Japanese Yen" },
+      "fx-audusd": { "name": "Australian Dollar / US Dollar" },
+      "fx-usdcnh": { "name": "US Dollar / Offshore Yuan" },
+      "crypto-btc": { "name": "Bitcoin USD" },
+      "crypto-eth": { "name": "Ethereum USD" },
+      "cmd-gold": { "name": "Gold Futures" },
+      "cmd-silver": { "name": "Silver Futures" },
+      "cmd-wti": { "name": "WTI Crude Oil Futures" },
+      "cmd-brent": { "name": "Brent Crude Oil Futures" },
+      "cmd-ng": { "name": "Natural Gas Futures" },
+      "cmd-copper": { "name": "Copper Futures" },
+      "cmd-wheat": { "name": "Wheat Futures" },
+      "cmd-corn": { "name": "Corn Futures" },
+      "cmd-soy": { "name": "Soybean Futures" }
+    }
+  },
+  "aiSummary": {
+    "title": "AI Market Summary",
+    "sentiment": "Sentiment",
+    "confidence": "Confidence",
+    "disclaimer": "Mock AI output — not financial advice. Connect OpenAI API in a future release for live summaries."
+  },
+  "calendar": {
+    "title": "Economic Calendar",
+    "today": "Today",
+    "prev": "Prev",
+    "forecast": "Fcst",
+    "actual": "Act"
+  },
+  "impact": {
+    "high": "high",
+    "medium": "medium",
+    "low": "low"
+  },
+  "assetClass": {
+    "us_equity": "US",
+    "cn_equity": "CN",
+    "options": "OPT",
+    "forex": "FX",
+    "commodity": "CMD",
+    "crypto": "CRYPTO"
+  },
+  "language": {
+    "label": "Language",
+    "en": "EN",
+    "zh": "中文"
+  },
+  "mock": {
+    "topBar": {
+      "SPY": { "name": "S&P 500 ETF" },
+      "QQQ": { "name": "Nasdaq 100 ETF" },
+      "BTC": { "name": "Bitcoin" },
+      "GOLD": { "name": "Gold Futures" },
+      "VIX": { "name": "Volatility Index" }
+    },
+    "watchlist": {
+      "AAPL": { "name": "Apple Inc." },
+      "NVDA": { "name": "NVIDIA Corp." },
+      "600519": { "name": "Kweichow Moutai" },
+      "SPX 5200C": { "name": "Jun SPX Call" },
+      "EUR/USD": { "name": "Euro / US Dollar" },
+      "CL": { "name": "WTI Crude Oil" },
+      "ETH": { "name": "Ethereum" },
+      "TSLA": { "name": "Tesla Inc." }
+    },
+    "ai": {
+      "generatedAt": "2026-05-20 09:35 ET",
+      "sentiment": "Cautiously Bullish",
+      "bullets": {
+        "0": "US equities opened higher on softer CPI expectations; tech leadership intact with semis outperforming.",
+        "1": "VIX compression suggests near-term risk appetite; watch 14.5 as a reversal trigger on macro surprises.",
+        "2": "BTC holding above $66K with ETF inflows steady; correlation with NASDAQ remains elevated.",
+        "3": "Gold steady near $2,350 as USD weakens marginally; oil supported by supply concerns in the Middle East.",
+        "4": "Key risk today: FOMC minutes at 14:00 ET — avoid oversized positions into the release."
+      },
+      "highlights": {
+        "breadth": { "label": "Breadth", "value": "62% advancers" },
+        "sectorLead": { "label": "Sector Lead", "value": "Technology +1.1%" },
+        "fx": { "label": "FX", "value": "DXY -0.12%" },
+        "rates": { "label": "Rates", "value": "10Y 4.28% (-2bp)" }
+      }
+    },
+    "calendar": {
+      "1": { "event": "Initial Jobless Claims" },
+      "2": { "event": "Existing Home Sales" },
+      "3": { "event": "FOMC Meeting Minutes" },
+      "4": { "event": "1-y Loan Prime Rate" },
+      "5": { "event": "ECB President Lagarde Speaks" }
+    }
+  }
+}
