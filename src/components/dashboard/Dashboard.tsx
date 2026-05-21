@@ -1,10 +1,8 @@
 import { HeaderToolbar } from "./HeaderToolbar";
-import { TradingChart } from "@/components/chart/TradingChart";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
-import { RightPanel } from "./RightPanel";
-import { MarketDetailPanel } from "./MarketDetailPanel";
-import { AIMarketSummaryClient } from "./AIMarketSummaryClient";
+import { DashboardMain } from "./DashboardMain";
+import { MobileLayoutProvider } from "@/providers/MobileLayoutProvider";
 import { TerminalBootLoader } from "@/components/brand/TerminalBootLoader";
 import { CommandPalette } from "@/components/command-palette/CommandPalette";
 import { CommandPaletteProvider } from "@/providers/CommandPaletteProvider";
@@ -22,6 +20,7 @@ export async function Dashboard() {
   return (
     <MarketDataProvider>
       <WatchlistProvider>
+        <MobileLayoutProvider>
         <CommandPaletteProvider>
         <TerminalBootLoader>
         <div className="flex h-screen flex-col overflow-hidden bg-[var(--background)]">
@@ -31,8 +30,8 @@ export async function Dashboard() {
           <div className="flex min-h-0 flex-1">
             <Sidebar />
 
-            <main className="flex min-h-0 flex-1 flex-col overflow-hidden pb-14 lg:pb-0">
-              <div className="flex gap-4 border-b border-[var(--border)] bg-[var(--surface)] px-3 py-2 md:hidden">
+            <main className="flex min-h-0 flex-1 flex-col overflow-hidden lg:pb-0">
+              <div className="flex shrink-0 gap-4 border-b border-[var(--border)] bg-[var(--surface)] px-3 py-2 md:hidden">
                 <MobileStat
                   label={t("portfolio")}
                   value={`$${formatPrice(totalValue)}`}
@@ -45,23 +44,14 @@ export async function Dashboard() {
                 />
               </div>
 
-              <div className="scrollbar-thin grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-auto p-2 lg:grid-cols-12 lg:gap-3 lg:p-3">
-                <div className="flex min-h-[320px] flex-col gap-2 lg:col-span-7 lg:gap-3">
-                  <TradingChart />
-                  <MarketDetailPanel />
-                  <AIMarketSummaryClient />
-                </div>
-
-                <div className="lg:col-span-5">
-                  <RightPanel />
-                </div>
-              </div>
+              <DashboardMain />
             </main>
           </div>
         </div>
         <CommandPalette />
         </TerminalBootLoader>
         </CommandPaletteProvider>
+        </MobileLayoutProvider>
       </WatchlistProvider>
     </MarketDataProvider>
   );

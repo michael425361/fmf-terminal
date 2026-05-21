@@ -16,6 +16,7 @@ import { ChartHeader } from "./ChartHeader";
 import { ChartToolbar } from "./ChartToolbar";
 import { ChartTooltip } from "./ChartTooltip";
 import { ChartSkeleton } from "@/components/market/MarketSkeleton";
+import { cn } from "@/lib/utils";
 
 const ChartContainer = dynamic(
   () => import("./ChartContainer").then((m) => m.ChartContainer),
@@ -29,7 +30,7 @@ const DEFAULT_INDICATORS: ChartIndicatorState = {
   volume: true,
 };
 
-export function TradingChart() {
+export function TradingChart({ className }: { className?: string }) {
   const t = useTranslations("tradingChart");
   const { activeItem } = useWatchlist();
   const { getQuote } = useMarketData();
@@ -47,7 +48,12 @@ export function TradingChart() {
   const bars = useMemo(() => data?.bars ?? [], [data?.bars]);
 
   return (
-    <section className="panel flex min-h-[380px] flex-1 flex-col overflow-hidden lg:min-h-[420px]">
+    <section
+      className={cn(
+        "panel flex min-h-0 flex-1 flex-col overflow-hidden lg:min-h-[420px]",
+        className
+      )}
+    >
       <ChartHeader
         asset={activeItem}
         quote={quote}
@@ -63,7 +69,7 @@ export function TradingChart() {
         onIndicatorsChange={setIndicators}
       />
 
-      <div className="relative min-h-[300px] flex-1">
+      <div className="relative min-h-[220px] flex-1 sm:min-h-[280px] lg:min-h-[300px]">
         {loading && bars.length === 0 ? (
           <ChartSkeleton />
         ) : error ? (

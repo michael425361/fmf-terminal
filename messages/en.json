@@ -57,12 +57,16 @@
     "dashboard": "Dashboard",
     "charts": "Charts",
     "portfolio": "Portfolio",
+    "watchlist": "Watchlist",
     "journal": "Journal",
     "calendar": "Calendar",
     "analytics": "Analytics"
   },
   "personalWatchlist": {
     "title": "My Watchlist",
+    "openSheet": "Open watchlist",
+    "closeSheet": "Close watchlist",
+    "symbolsShort": "symbols",
     "detailTitle": "Market Detail",
     "empty": "No symbols in your watchlist. Search and add assets with the star button.",
     "addToWatchlist": "Add to Watchlist",

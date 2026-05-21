@@ -9,13 +9,23 @@ import { cn } from "@/lib/utils";
 
 type Tab = "mine" | "macro";
 
-export function RightPanel() {
+interface RightPanelProps {
+  variant?: "desktop" | "sheet";
+  /** Close mobile sheet after selecting a symbol */
+  onSymbolSelect?: () => void;
+}
+
+export function RightPanel({
+  variant = "desktop",
+  onSymbolSelect,
+}: RightPanelProps) {
   const t = useTranslations("personalWatchlist");
   const tMarket = useTranslations("market");
   const [tab, setTab] = useState<Tab>("mine");
+  const inSheet = variant === "sheet";
 
   return (
-    <div className="flex flex-col gap-2 lg:gap-3">
+    <div className={cn("flex flex-col gap-2", !inSheet && "lg:gap-3")}>
       <div className="flex shrink-0 border border-[var(--border)] bg-[var(--surface-card)]">
         {(
           [
@@ -39,11 +49,23 @@ export function RightPanel() {
         ))}
       </div>
 
-      <div className="min-h-[280px] flex-1 lg:min-h-[320px]">
-        {tab === "mine" ? <PersonalWatchlist /> : <MacroPanel />}
+      <div
+        className={cn(
+          "flex-1",
+          inSheet ? "min-h-[200px]" : "min-h-[280px] lg:min-h-[320px]"
+        )}
+      >
+        {tab === "mine" ? (
+          <PersonalWatchlist
+            mobile={inSheet}
+            onSymbolSelect={onSymbolSelect}
+          />
+        ) : (
+          <MacroPanel />
+        )}
       </div>
 
-      <EconomicCalendar />
+      {!inSheet && <EconomicCalendar />}
     </div>
   );
 }

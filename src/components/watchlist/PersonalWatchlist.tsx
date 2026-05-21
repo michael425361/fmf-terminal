@@ -13,7 +13,15 @@ import { Sparkline } from "./Sparkline";
 import { WatchlistSkeleton } from "@/components/market/MarketSkeleton";
 import { cn } from "@/lib/utils";
 
-export function PersonalWatchlist() {
+interface PersonalWatchlistProps {
+  mobile?: boolean;
+  onSymbolSelect?: () => void;
+}
+
+export function PersonalWatchlist({
+  mobile = false,
+  onSymbolSelect,
+}: PersonalWatchlistProps = {}) {
   const t = useTranslations("personalWatchlist");
   const { items, activeId, setActive, remove, togglePin, reorder, hydrated } =
     useWatchlist();
@@ -23,7 +31,12 @@ export function PersonalWatchlist() {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   return (
-    <section className="panel flex min-h-[320px] flex-1 flex-col overflow-hidden">
+    <section
+      className={cn(
+        "panel flex flex-1 flex-col overflow-hidden",
+        mobile ? "min-h-[200px] border-0" : "min-h-[320px]"
+      )}
+    >
       <div className="panel-header">
         <span>{t("title")}</span>
         <span className="font-mono text-[var(--accent)]">{items.length}</span>
@@ -46,7 +59,11 @@ export function PersonalWatchlist() {
               quote={getQuote(item.id)}
               previous={getPreviousQuote(item.id)}
               sparkline={watchlistSparklines[item.id]}
-              onSelect={() => setActive(item.id)}
+              onSelect={() => {
+                setActive(item.id);
+                onSymbolSelect?.();
+              }}
+              mobile={mobile}
               onRemove={() => remove(item.id)}
               onTogglePin={() => togglePin(item.id)}
               dragIndex={dragIndex}
@@ -73,6 +90,7 @@ function WatchlistRow({
   dragIndex,
   setDragIndex,
   onReorder,
+  mobile = false,
 }: {
   item: WatchlistItemView;
   index: number;
@@ -86,6 +104,7 @@ function WatchlistRow({
   dragIndex: number | null;
   setDragIndex: (i: number | null) => void;
   onReorder: (from: number, to: number) => void;
+  mobile?: boolean;
 }) {
   const rowRef = useRef<HTMLLIElement>(null);
   const positive = quote ? isQuotePositive(quote) : true;
@@ -99,7 +118,7 @@ function WatchlistRow({
   return (
     <li
       ref={rowRef}
-      draggable
+      draggable={!mobile}
       onDragStart={() => setDragIndex(index)}
       onDragEnd={() => setDragIndex(null)}
       onDragOver={(e) => e.preventDefault()}
@@ -119,7 +138,9 @@ function WatchlistRow({
       )}
       title={`${item.name} (${item.symbol})`}
     >
-      <GripVertical className="h-3.5 w-3.5 shrink-0 cursor-grab text-[var(--muted)] opacity-40 group-hover:opacity-100" />
+      {!mobile && (
+        <GripVertical className="h-3.5 w-3.5 shrink-0 cursor-grab text-[var(--muted)] opacity-40 group-hover:opacity-100" />
+      )}
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
