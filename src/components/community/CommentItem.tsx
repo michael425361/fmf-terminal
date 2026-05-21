@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp, Heart, MessageCircle } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatRelativeTime } from "@/lib/news/relative-time";
-import { formatCount } from "@/lib/community/mock-posts";
+import { formatCount } from "@/lib/community/format";
 import { UserAvatar } from "@/components/auth/UserAvatar";
 import type { CommunityComment } from "@/lib/community/types";
 import { CommentBody } from "./CommentBody";

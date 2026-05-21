@@ -3,14 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import {
-  buildPostFromDraft,
-  validateCreatePostDraft,
-} from "@/lib/community/create-post";
+import { validateCreatePostDraft } from "@/lib/community/create-post";
 import { useAuth } from "@/providers/AuthProvider";
 import type {
   CommunityCategory,
-  CommunityPost,
   CreatePostDraft,
   CreatePostFormErrors,
 } from "@/lib/community/types";
@@ -30,14 +26,14 @@ interface CreatePostModalProps {
   open: boolean;
   defaultCategory: CommunityCategory;
   onClose: () => void;
-  onPosted: (post: CommunityPost, category: CommunityCategory) => void;
+  onSubmit: (draft: CreatePostDraft) => Promise<void>;
 }
 
 export function CreatePostModal({
   open,
   defaultCategory,
   onClose,
-  onPosted,
+  onSubmit,
 }: CreatePostModalProps) {
   const t = useTranslations("community.createPost");
   const { profile } = useAuth();
@@ -80,15 +76,12 @@ export function CreatePostModal({
     setErrors({});
     setSubmitting(true);
 
-    const pendingPost = buildPostFromDraft(draft, profile, { pending: true });
-    const category = draft.category;
-
-    onPosted(pendingPost, category);
-    onClose();
-
-    await new Promise((r) => setTimeout(r, 650));
-    setSubmitting(false);
-  }, [draft, onClose, onPosted, profile]);
+    try {
+      await onSubmit(draft);
+    } finally {
+      setSubmitting(false);
+    }
+  }, [draft, onSubmit, profile]);
 
   if (!open) return null;
 

@@ -127,10 +127,9 @@
   },
   "community": {
     "title": "社区",
-    "mockNotice": "帖子仅保存在本地 — 云端同步即将上线",
     "newPost": "发帖",
-    "newPostSoon": "发帖功能将在后续版本开放",
-    "empty": "该频道暂无帖子。",
+    "empty": "暂无帖子",
+    "loadError": "无法加载帖子，请检查 Supabase 连接。",
     "tabs": {
       "us": "美股",
       "cn": "A股",
@@ -149,7 +148,9 @@
       "tagsHint": "用逗号或空格分隔，最多 8 个代码",
       "submit": "发布",
       "submitting": "发布中…",
+      "publishing": "发布中…",
       "published": "发布成功",
+      "failed": "发布失败，请重试",
       "categories": {
         "us": "美股",
         "cn": "A股",
@@ -158,6 +159,18 @@
       "errors": {
         "required": "请填写此项"
       }
+    },
+    "likes": {
+      "like": "点赞",
+      "unlike": "取消点赞",
+      "failed": "点赞失败，请重试"
+    },
+    "bookmarks": {
+      "save": "收藏帖子",
+      "remove": "取消收藏",
+      "saved": "已收藏",
+      "removed": "已取消收藏",
+      "failed": "收藏操作失败，请重试"
     },
     "comments": {
       "viewComments": "查看 {count} 条评论",
@@ -170,7 +183,10 @@
       "tagHint": "输入 $ 加代码可标注股票",
       "submit": "发送",
       "cancel": "取消",
-      "empty": "暂无评论，来抢沙发"
+      "empty": "暂无评论，来抢沙发",
+      "posted": "评论已发布",
+      "postFailed": "评论发布失败，请重试",
+      "loadFailed": "无法加载评论"
     }
   },
   "news": {
@@ -192,6 +208,9 @@
     "empty": "自选列表为空。使用搜索和星标按钮添加标的。",
     "addToWatchlist": "加入自选",
     "removeFromWatchlist": "移出自选",
+    "syncing": "正在同步自选…",
+    "syncFailed": "自选同步失败",
+    "cloudLoadFailed": "无法加载云端自选",
     "favorited": "已收藏",
     "searchPlaceholder": "搜索代码、名称或 ticker…",
     "searchHint": "可搜索美股、A股、港股、ETF、外汇、加密、大宗等",

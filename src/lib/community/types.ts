@@ -15,6 +15,8 @@ export interface CommunityPost {
   likes: number;
   comments: number;
   views: number;
+  likedByMe?: boolean;
+  bookmarkedByMe?: boolean;
   /** Optimistic post while simulated publish completes */
   isPending?: boolean;
   isLocal?: boolean;

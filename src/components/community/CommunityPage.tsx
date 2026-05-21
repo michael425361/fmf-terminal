@@ -6,20 +6,32 @@ import { Link } from "@/i18n/navigation";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { useAuth } from "@/providers/AuthProvider";
-import { mergePostsForCategory } from "@/lib/community/create-post";
-import { getPostsByCategory } from "@/lib/community/mock-posts";
 import {
-  buildComment,
-  createInitialCommentsState,
+  buildPostFromDraft,
+  sortPostsByDate,
+} from "@/lib/community/create-post";
+import { buildOptimisticComment } from "@/lib/community/comment-build";
+import {
+  createComment,
   getCommentsForPost,
+  getCommentsForPosts,
 } from "@/lib/community/comments";
+import { bookmarkPost, unbookmarkPost } from "@/lib/community/bookmarks";
+import { likePost, unlikePost } from "@/lib/community/likes";
+import {
+  applyPostInteractionMeta,
+  fetchPostInteractionMeta,
+} from "@/lib/community/post-meta";
+import { createPost, fetchPosts } from "@/lib/community/posts";
 import type {
   CommentsByPostId,
   CommunityCategory,
   CommunityComment,
   CommunityPost,
+  CreatePostDraft,
 } from "@/lib/community/types";
 import { CommunityPostCard } from "./CommunityPostCard";
+import { CommunityPostSkeleton } from "./CommunityPostSkeleton";
 import { CreatePostModal } from "./CreatePostModal";
 import { NewPostFab } from "./NewPostFab";
 import { cn } from "@/lib/utils";
@@ -28,54 +40,188 @@ const TABS: CommunityCategory[] = ["us", "cn", "daily"];
 
 export function CommunityPage() {
   const t = useTranslations("community");
-  const { profile, requireAuth } = useAuth();
+  const { profile, requireAuth, showToast } = useAuth();
   const [tab, setTab] = useState<CommunityCategory>("us");
   const [modalOpen, setModalOpen] = useState(false);
-  const [localPosts, setLocalPosts] = useState<CommunityPost[]>([]);
-  const [commentsByPost, setCommentsByPost] =
-    useState<CommentsByPostId>(createInitialCommentsState);
+  const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [optimisticPosts, setOptimisticPosts] = useState<CommunityPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [commentsByPost, setCommentsByPost] = useState<CommentsByPostId>({});
+  const [commentsLoading, setCommentsLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  const mockPosts = useMemo(() => getPostsByCategory(tab), [tab]);
+  const displayPosts = useMemo(() => {
+    const pending = optimisticPosts.filter((p) => p.category === tab);
+    const serverIds = new Set(posts.map((p) => p.id));
+    const pendingOnly = pending.filter((p) => !serverIds.has(p.id));
+    return sortPostsByDate([...pendingOnly, ...posts]);
+  }, [optimisticPosts, posts, tab]);
 
-  const posts = useMemo(
-    () => mergePostsForCategory(mockPosts, localPosts, tab),
-    [mockPosts, localPosts, tab]
-  );
+  const showPageToast = useCallback((message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(null), 2800);
+  }, []);
 
-  const showToast = useCallback(
-    (message: string) => {
-      setToast(message);
-      window.setTimeout(() => setToast(null), 2800);
+  const loadPosts = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const data = await fetchPosts(tab);
+      const postIds = data.map((p) => p.id);
+
+      const [meta, commentsMap] = await Promise.all([
+        fetchPostInteractionMeta(postIds, profile?.id ?? null),
+        getCommentsForPosts(postIds),
+      ]);
+
+      setPosts(applyPostInteractionMeta(data, meta));
+      setCommentsByPost(commentsMap);
+      setOptimisticPosts((prev) => prev.filter((p) => p.isPending));
+    } catch (err) {
+      setPosts([]);
+      setCommentsByPost({});
+      setLoadError(
+        err instanceof Error ? err.message : t("loadError")
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [tab, t, profile?.id]);
+
+  useEffect(() => {
+    void loadPosts();
+  }, [loadPosts]);
+
+  const refreshComments = useCallback(
+    async (postIds: string[]) => {
+      if (postIds.length === 0) return;
+      setCommentsLoading(true);
+      try {
+        const map = await getCommentsForPosts(postIds);
+        setCommentsByPost((prev) => ({ ...prev, ...map }));
+      } catch {
+        showToast(t("comments.loadFailed"), "error");
+      } finally {
+        setCommentsLoading(false);
+      }
     },
-    []
+    [showToast, t]
   );
 
   const handleAddComment = useCallback(
-    async (
-      postId: string,
-      body: string,
-      parentId: string | null
-    ) => {
+    async (postId: string, body: string, _parentId: string | null) => {
       if (!profile) return;
-      const pending = buildComment(postId, body, profile, parentId, {
+      const pending = buildOptimisticComment(postId, body, profile, {
         pending: true,
       });
       setCommentsByPost((prev) => ({
         ...prev,
         [postId]: [...(prev[postId] ?? []), pending],
       }));
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId ? { ...p, comments: p.comments + 1 } : p
+        )
+      );
 
-      await new Promise((r) => setTimeout(r, 400));
-
-      setCommentsByPost((prev) => ({
-        ...prev,
-        [postId]: (prev[postId] ?? []).map((c) =>
-          c.id === pending.id ? { ...c, isPending: false } : c
-        ),
-      }));
+      try {
+        const created = await createComment(postId, body, profile);
+        setCommentsByPost((prev) => ({
+          ...prev,
+          [postId]: (prev[postId] ?? [])
+            .filter((c) => c.id !== pending.id)
+            .concat(created),
+        }));
+        showPageToast(t("comments.posted"));
+      } catch {
+        setCommentsByPost((prev) => ({
+          ...prev,
+          [postId]: (prev[postId] ?? []).filter((c) => c.id !== pending.id),
+        }));
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId
+              ? { ...p, comments: Math.max(0, p.comments - 1) }
+              : p
+          )
+        );
+        showToast(t("comments.postFailed"), "error");
+      }
     },
-    [profile]
+    [profile, showPageToast, showToast, t]
+  );
+
+  const handleLikeToggle = useCallback(
+    async (post: CommunityPost) => {
+      if (!profile || !requireAuth("favorite")) return;
+
+      const wasLiked = post.likedByMe ?? false;
+      const nextLiked = !wasLiked;
+      const delta = nextLiked ? 1 : -1;
+
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === post.id
+            ? {
+                ...p,
+                likedByMe: nextLiked,
+                likes: Math.max(0, p.likes + delta),
+              }
+            : p
+        )
+      );
+
+      try {
+        if (nextLiked) await likePost(post.id, profile.id);
+        else await unlikePost(post.id, profile.id);
+      } catch {
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === post.id
+              ? {
+                  ...p,
+                  likedByMe: wasLiked,
+                  likes: Math.max(0, p.likes - delta),
+                }
+              : p
+          )
+        );
+        showToast(t("likes.failed"), "error");
+      }
+    },
+    [profile, requireAuth, showToast, t]
+  );
+
+  const handleBookmarkToggle = useCallback(
+    async (post: CommunityPost) => {
+      if (!profile || !requireAuth("favorite")) return;
+
+      const wasSaved = post.bookmarkedByMe ?? false;
+      const nextSaved = !wasSaved;
+
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === post.id ? { ...p, bookmarkedByMe: nextSaved } : p
+        )
+      );
+
+      try {
+        if (nextSaved) await bookmarkPost(post.id, profile.id);
+        else await unbookmarkPost(post.id, profile.id);
+        showPageToast(
+          nextSaved ? t("bookmarks.saved") : t("bookmarks.removed")
+        );
+      } catch {
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === post.id ? { ...p, bookmarkedByMe: wasSaved } : p
+          )
+        );
+        showToast(t("bookmarks.failed"), "error");
+      }
+    },
+    [profile, requireAuth, showPageToast, showToast, t]
   );
 
   useEffect(() => {
@@ -103,7 +249,8 @@ export function CommunityPage() {
           }
         : c;
 
-    setLocalPosts((prev) => prev.map(patchPost));
+    setPosts((prev) => prev.map(patchPost));
+    setOptimisticPosts((prev) => prev.map(patchPost));
     setCommentsByPost((prev) => {
       const next: CommentsByPostId = {};
       for (const [postId, list] of Object.entries(prev)) {
@@ -119,24 +266,37 @@ export function CommunityPage() {
     profile?.avatarHue,
   ]);
 
-  const handlePosted = useCallback(
-    (post: CommunityPost, category: CommunityCategory) => {
-      setLocalPosts((prev) => [post, ...prev]);
+  const handleCreatePost = useCallback(
+    async (draft: CreatePostDraft) => {
+      if (!profile) return;
+
+      const category = draft.category;
+      const optimistic = buildPostFromDraft(draft, profile, { pending: true });
+
+      setOptimisticPosts((prev) => [optimistic, ...prev]);
       setTab(category);
       setModalOpen(false);
-      showToast(t("createPost.published"));
+      showPageToast(t("createPost.publishing"));
 
-      if (post.isPending) {
-        window.setTimeout(() => {
-          setLocalPosts((prev) =>
-            prev.map((p) =>
-              p.id === post.id ? { ...p, isPending: false } : p
-            )
-          );
-        }, 700);
+      try {
+        const created = await createPost(draft, profile);
+        setOptimisticPosts((prev) =>
+          prev.filter((p) => p.id !== optimistic.id)
+        );
+        setPosts((prev) => {
+          const withoutDup = prev.filter((p) => p.id !== created.id);
+          return sortPostsByDate([created, ...withoutDup]);
+        });
+        showPageToast(t("createPost.published"));
+        await loadPosts();
+      } catch {
+        setOptimisticPosts((prev) =>
+          prev.filter((p) => p.id !== optimistic.id)
+        );
+        showPageToast(t("createPost.failed"));
       }
     },
-    [showToast, t]
+    [profile, showPageToast, t, loadPosts]
   );
 
   return (
@@ -185,19 +345,33 @@ export function CommunityPage() {
         className="app-scroll scrollbar-thin pb-24 lg:pb-8"
       >
         <div className="mx-auto max-w-3xl px-4 py-4 lg:px-6 lg:py-6">
-          {posts.length === 0 ? (
+          {loadError && (
+            <p className="mb-3 rounded border border-[var(--negative)]/40 bg-[var(--negative)]/10 px-3 py-2 text-xs text-[var(--negative)]">
+              {loadError}
+            </p>
+          )}
+
+          {loading ? (
+            <CommunityPostSkeleton />
+          ) : displayPosts.length === 0 ? (
             <p className="py-12 text-center text-xs text-[var(--muted)]">
               {t("empty")}
             </p>
           ) : (
             <div className="flex flex-col gap-3">
-              {posts.map((post) => (
+              {displayPosts.map((post) => (
                 <CommunityPostCard
                   key={post.id}
                   post={post}
                   comments={getCommentsForPost(commentsByPost, post.id)}
+                  commentsLoading={commentsLoading}
                   onAddComment={handleAddComment}
+                  onLikeToggle={() => void handleLikeToggle(post)}
+                  onBookmarkToggle={() => void handleBookmarkToggle(post)}
                   onRequireAuth={() => requireAuth("comment")}
+                  onCommentsOpen={() =>
+                    void refreshComments([post.id])
+                  }
                 />
               ))}
             </div>
@@ -217,7 +391,7 @@ export function CommunityPage() {
         open={modalOpen}
         defaultCategory={tab}
         onClose={() => setModalOpen(false)}
-        onPosted={handlePosted}
+        onSubmit={handleCreatePost}
       />
 
       {toast && (

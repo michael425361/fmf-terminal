@@ -1,0 +1,121 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { initialsFromName } from "@/lib/auth/profile";
+import type { UserProfile } from "@/lib/auth/profile";
+import { createClient } from "@/lib/supabase/client";
+import { parseStockTags } from "./create-post";
+import type {
+  CommunityCategory,
+  CommunityPost,
+  CreatePostDraft,
+} from "./types";
+
+export interface PostRow {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  username: string;
+  avatar_url: string | null;
+  category: CommunityCategory;
+  title: string;
+  content: string;
+  ticker_tags: string[] | null;
+  like_count: number;
+  comment_count: number;
+  view_count: number;
+}
+
+function hashHue(input: string): number {
+  let h = 0;
+  for (let i = 0; i < input.length; i++) {
+    h = (h << 5) - h + input.charCodeAt(i);
+    h |= 0;
+  }
+  return Math.abs(h) % 360;
+}
+
+export function postRowToCommunityPost(row: PostRow): CommunityPost {
+  const title = row.title;
+  const content = row.content;
+
+  return {
+    id: row.id,
+    category: row.category,
+    userId: row.user_id,
+    username: row.username,
+    avatarInitials: initialsFromName(row.username),
+    avatarHue: hashHue(row.user_id),
+    avatarUrl: row.avatar_url,
+    publishedAt: row.created_at,
+    title: { en: title, zh: title },
+    content: { en: content, zh: content },
+    tags: row.ticker_tags ?? [],
+    likes: row.like_count,
+    comments: row.comment_count,
+    views: row.view_count,
+  };
+}
+
+export async function fetchPosts(
+  category: CommunityCategory,
+  client?: SupabaseClient
+): Promise<CommunityPost[]> {
+  const supabase = client ?? createClient();
+
+  const { data, error } = await supabase
+    .from("posts")
+    .select(
+      "id, created_at, updated_at, user_id, username, avatar_url, category, title, content, ticker_tags, like_count, comment_count, view_count"
+    )
+    .eq("category", category)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return ((data ?? []) as PostRow[]).map(postRowToCommunityPost);
+}
+
+export async function createPost(
+  draft: CreatePostDraft,
+  author: UserProfile,
+  client?: SupabaseClient
+): Promise<CommunityPost> {
+  const supabase = client ?? createClient();
+
+  const { data, error } = await supabase
+    .from("posts")
+    .insert({
+      user_id: author.id,
+      username: author.username,
+      avatar_url: author.avatarUrl,
+      category: draft.category,
+      title: draft.title.trim(),
+      content: draft.content.trim(),
+      ticker_tags: parseStockTags(draft.tagsInput),
+    })
+    .select(
+      "id, created_at, updated_at, user_id, username, avatar_url, category, title, content, ticker_tags, like_count, comment_count, view_count"
+    )
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return postRowToCommunityPost(data as PostRow);
+}
+
+export async function deletePost(
+  postId: string,
+  client?: SupabaseClient
+): Promise<void> {
+  const supabase = client ?? createClient();
+
+  const { error } = await supabase.from("posts").delete().eq("id", postId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}

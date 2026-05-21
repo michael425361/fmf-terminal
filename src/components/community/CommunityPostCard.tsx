@@ -1,10 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Eye, Heart, MessageCircle } from "lucide-react";
+import {
+  Bookmark,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  Heart,
+  MessageCircle,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatRelativeTime } from "@/lib/news/relative-time";
-import { formatCount } from "@/lib/community/mock-posts";
+import { formatCount } from "@/lib/community/format";
 import { UserAvatar } from "@/components/auth/UserAvatar";
 import type { CommunityComment, CommunityPost } from "@/lib/community/types";
 import { PostCommentsSection } from "./PostCommentsSection";
@@ -13,29 +20,45 @@ import { cn } from "@/lib/utils";
 interface CommunityPostCardProps {
   post: CommunityPost;
   comments: CommunityComment[];
+  commentsLoading?: boolean;
   onAddComment: (
     postId: string,
     body: string,
     parentId: string | null
   ) => Promise<void>;
+  onLikeToggle: () => void;
+  onBookmarkToggle: () => void;
   onRequireAuth: () => boolean;
+  onCommentsOpen?: () => void;
   className?: string;
 }
 
 export function CommunityPostCard({
   post,
   comments,
+  commentsLoading = false,
   onAddComment,
+  onLikeToggle,
+  onBookmarkToggle,
   onRequireAuth,
+  onCommentsOpen,
   className,
 }: CommunityPostCardProps) {
-  const t = useTranslations("community.comments");
+  const t = useTranslations("community");
   const locale = useLocale();
   const lang = locale === "zh" ? "zh" : "en";
   const timeLabel = formatRelativeTime(post.publishedAt, locale);
   const [commentsOpen, setCommentsOpen] = useState(false);
 
-  const commentCount = comments.length;
+  const commentCount = Math.max(comments.length, post.comments);
+  const liked = post.likedByMe ?? false;
+  const bookmarked = post.bookmarkedByMe ?? false;
+
+  const toggleComments = () => {
+    const opening = !commentsOpen;
+    setCommentsOpen(opening);
+    if (opening) onCommentsOpen?.();
+  };
 
   return (
     <article
@@ -90,13 +113,28 @@ export function CommunityPostCard({
           )}
 
           <div className="mt-3 flex flex-wrap items-center gap-3 text-[var(--muted)]">
-            <span className="inline-flex items-center gap-1 font-mono text-[10px]">
-              <Heart className="h-3.5 w-3.5" strokeWidth={1.75} />
-              {formatCount(post.likes)}
-            </span>
             <button
               type="button"
-              onClick={() => setCommentsOpen((o) => !o)}
+              onClick={onLikeToggle}
+              aria-pressed={liked}
+              aria-label={liked ? t("likes.unlike") : t("likes.like")}
+              className={cn(
+                "inline-flex items-center gap-1 rounded font-mono text-[10px] transition",
+                liked
+                  ? "text-[var(--negative)]"
+                  : "text-[var(--muted)] hover:text-[var(--negative)]"
+              )}
+            >
+              <Heart
+                className="h-3.5 w-3.5"
+                strokeWidth={1.75}
+                fill={liked ? "currentColor" : "none"}
+              />
+              {formatCount(post.likes)}
+            </button>
+            <button
+              type="button"
+              onClick={toggleComments}
               className={cn(
                 "inline-flex items-center gap-1 rounded font-mono text-[10px] transition",
                 commentsOpen
@@ -115,6 +153,26 @@ export function CommunityPostCard({
                 )}
               </span>
             </button>
+            <button
+              type="button"
+              onClick={onBookmarkToggle}
+              aria-pressed={bookmarked}
+              aria-label={
+                bookmarked ? t("bookmarks.remove") : t("bookmarks.save")
+              }
+              className={cn(
+                "inline-flex items-center gap-1 rounded font-mono text-[10px] transition",
+                bookmarked
+                  ? "text-[var(--accent)]"
+                  : "text-[var(--muted)] hover:text-[var(--accent)]"
+              )}
+            >
+              <Bookmark
+                className="h-3.5 w-3.5"
+                strokeWidth={1.75}
+                fill={bookmarked ? "currentColor" : "none"}
+              />
+            </button>
             <span className="inline-flex items-center gap-1 font-mono text-[10px]">
               <Eye className="h-3.5 w-3.5" strokeWidth={1.75} />
               {formatCount(post.views)}
@@ -124,10 +182,13 @@ export function CommunityPostCard({
           {!commentsOpen && commentCount > 0 && (
             <button
               type="button"
-              onClick={() => setCommentsOpen(true)}
+              onClick={() => {
+                setCommentsOpen(true);
+                onCommentsOpen?.();
+              }}
               className="mt-2 text-left text-[10px] font-medium text-[var(--accent)] transition hover:underline"
             >
-              {t("viewComments", { count: commentCount })}
+              {t("comments.viewComments", { count: commentCount })}
             </button>
           )}
 
@@ -135,6 +196,7 @@ export function CommunityPostCard({
             <PostCommentsSection
               postId={post.id}
               comments={comments}
+              loading={commentsLoading}
               onAddComment={onAddComment}
               onRequireAuth={onRequireAuth}
             />

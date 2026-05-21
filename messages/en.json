@@ -127,10 +127,9 @@
   },
   "community": {
     "title": "Community",
-    "mockNotice": "Local posts only — sync coming soon",
     "newPost": "New Post",
-    "newPostSoon": "Posting will be available in a future update",
-    "empty": "No posts in this channel yet.",
+    "empty": "No posts yet",
+    "loadError": "Could not load posts. Check Supabase connection.",
     "tabs": {
       "us": "US Stocks",
       "cn": "A-Shares",
@@ -149,7 +148,9 @@
       "tagsHint": "Separate with commas or spaces. Up to 8 symbols.",
       "submit": "Publish",
       "submitting": "Publishing…",
+      "publishing": "Publishing…",
       "published": "Post published",
+      "failed": "Could not publish post. Try again.",
       "categories": {
         "us": "US",
         "cn": "A-Share",
@@ -158,6 +159,18 @@
       "errors": {
         "required": "This field is required"
       }
+    },
+    "likes": {
+      "like": "Like post",
+      "unlike": "Unlike post",
+      "failed": "Could not update like. Try again."
+    },
+    "bookmarks": {
+      "save": "Save post",
+      "remove": "Remove bookmark",
+      "saved": "Post saved",
+      "removed": "Bookmark removed",
+      "failed": "Could not update bookmark. Try again."
     },
     "comments": {
       "viewComments": "View {count} comments",
@@ -170,7 +183,10 @@
       "tagHint": "Type $ before tickers to tag symbols",
       "submit": "Comment",
       "cancel": "Cancel",
-      "empty": "No comments yet — start the discussion"
+      "empty": "No comments yet — start the discussion",
+      "posted": "Comment posted",
+      "postFailed": "Could not post comment. Try again.",
+      "loadFailed": "Could not load comments."
     }
   },
   "news": {
@@ -192,6 +208,9 @@
     "empty": "No symbols in your watchlist. Search and add assets with the star button.",
     "addToWatchlist": "Add to Watchlist",
     "removeFromWatchlist": "Remove from Watchlist",
+    "syncing": "Syncing watchlist…",
+    "syncFailed": "Watchlist sync failed",
+    "cloudLoadFailed": "Could not load cloud watchlist",
     "favorited": "In Watchlist",
     "searchPlaceholder": "Search symbol, name, or ticker…",
     "searchHint": "Type to search US stocks, A-shares, HK, ETFs, FX, crypto, commodities…",

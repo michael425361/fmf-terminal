@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -19,6 +20,14 @@ import type {
   WatchlistPersistedState,
   WatchlistStoredItem,
 } from "@/lib/watchlist/types";
+import {
+  addToWatchlist,
+  getWatchlist,
+  removeFromWatchlist,
+  syncWatchlistSymbols,
+} from "@/lib/watchlist/watchlist";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { useAuth } from "./AuthProvider";
 import { useMarketData } from "./MarketDataProvider";
 
 interface WatchlistContextValue {
@@ -36,6 +45,7 @@ interface WatchlistContextValue {
   togglePin: (id: string) => void;
   reorder: (fromIndex: number, toIndex: number) => void;
   hydrated: boolean;
+  cloudSyncing: boolean;
 }
 
 const WatchlistContext = createContext<WatchlistContextValue | null>(null);
@@ -56,12 +66,32 @@ function toViewItems(stored: WatchlistStoredItem[]): WatchlistItemView[] {
     .filter((x): x is WatchlistItemView => x !== null);
 }
 
+function mergeCloudSymbols(
+  prev: WatchlistPersistedState,
+  cloudSymbols: string[]
+): WatchlistPersistedState {
+  const localIds = new Set(prev.items.map((i) => i.id));
+  const mergedIds = [...new Set([...cloudSymbols, ...localIds])];
+  const items = mergedIds.map((id) => {
+    const existing = prev.items.find((i) => i.id === id);
+    return existing ?? { id };
+  });
+  const activeId =
+    prev.activeId && mergedIds.includes(prev.activeId)
+      ? prev.activeId
+      : items[0]?.id ?? null;
+  return { ...prev, items, activeId };
+}
+
 export function WatchlistProvider({ children }: { children: React.ReactNode }) {
+  const { user, showToast } = useAuth();
   const { setChartSymbol, loadWatchlistMarketData } = useMarketData();
   const [persisted, setPersisted] = useState<WatchlistPersistedState>(
     createDefaultWatchlistState
   );
   const [hydrated, setHydrated] = useState(false);
+  const [cloudSyncing, setCloudSyncing] = useState(false);
+  const cloudLoadedRef = useRef<string | null>(null);
 
   useEffect(() => {
     setPersisted(loadWatchlistState());
@@ -84,20 +114,79 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
     return items[0] ?? null;
   }, [items, persisted.activeId, persisted.items]);
 
+  const syncToCloud = useCallback(
+    async (symbols: string[], userId: string) => {
+      if (!isSupabaseConfigured()) return;
+      try {
+        await syncWatchlistSymbols(symbols, userId);
+      } catch {
+        showToast("Watchlist sync failed", "error");
+      }
+    },
+    [showToast]
+  );
+
   const persist = useCallback(
     (
       next:
         | WatchlistPersistedState
-        | ((prev: WatchlistPersistedState) => WatchlistPersistedState)
+        | ((prev: WatchlistPersistedState) => WatchlistPersistedState),
+      options?: { skipCloud?: boolean }
     ) => {
       setPersisted((prev) => {
         const resolved = typeof next === "function" ? next(prev) : next;
         saveWatchlistState(resolved);
+        if (
+          !options?.skipCloud &&
+          user?.id &&
+          isSupabaseConfigured()
+        ) {
+          const symbols = resolved.items.map((i) => i.id);
+          void syncToCloud(symbols, user.id);
+        }
         return resolved;
       });
     },
-    []
+    [user?.id, syncToCloud]
   );
+
+  useEffect(() => {
+    if (!hydrated || !user?.id || !isSupabaseConfigured()) return;
+    if (cloudLoadedRef.current === user.id) return;
+
+    let cancelled = false;
+    setCloudSyncing(true);
+
+    void (async () => {
+      try {
+        const cloud = await getWatchlist(user.id);
+        if (cancelled) return;
+        cloudLoadedRef.current = user.id;
+
+        setPersisted((prev) => {
+          const merged = mergeCloudSymbols(prev, cloud);
+          saveWatchlistState(merged);
+          void syncWatchlistSymbols(
+            merged.items.map((i) => i.id),
+            user.id
+          ).catch(() => showToast("Watchlist sync failed", "error"));
+          return merged;
+        });
+      } catch {
+        if (!cancelled) showToast("Could not load cloud watchlist", "error");
+      } finally {
+        if (!cancelled) setCloudSyncing(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, user?.id, showToast]);
+
+  useEffect(() => {
+    if (!user?.id) cloudLoadedRef.current = null;
+  }, [user?.id]);
 
   const ids = useMemo(() => items.map((i) => i.id), [items]);
 
@@ -138,8 +227,13 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
           activeId: prev.activeId ?? id,
         };
       });
+      if (user?.id && isSupabaseConfigured()) {
+        void addToWatchlist(id, user.id).catch(() =>
+          showToast("Watchlist sync failed", "error")
+        );
+      }
     },
-    [persist]
+    [persist, user?.id, showToast]
   );
 
   const remove = useCallback(
@@ -150,56 +244,53 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
           prev.activeId === id ? (nextItems[0]?.id ?? null) : prev.activeId;
         return { ...prev, items: nextItems, activeId: nextActive };
       });
+      if (user?.id && isSupabaseConfigured()) {
+        void removeFromWatchlist(id, user.id).catch(() =>
+          showToast("Watchlist sync failed", "error")
+        );
+      }
     },
-    [persist]
+    [persist, user?.id, showToast]
   );
 
   const toggle = useCallback(
     (id: string) => {
-      setPersisted((prev) => {
-        if (prev.items.some((i) => i.id === id)) {
-          const nextItems = prev.items.filter((i) => i.id !== id);
-          const nextActive =
-            prev.activeId === id ? (nextItems[0]?.id ?? null) : prev.activeId;
-          const next = { ...prev, items: nextItems, activeId: nextActive };
-          saveWatchlistState(next);
-          return next;
-        }
-        const entry = getCatalogEntryById(id);
-        if (!entry) return prev;
-        registerCatalogEntry(entry);
-        const next = {
-          ...prev,
-          items: [...prev.items, { id }],
-          activeId: prev.activeId ?? id,
-        };
-        saveWatchlistState(next);
-        return next;
-      });
+      const has = persisted.items.some((i) => i.id === id);
+      if (has) {
+        remove(id);
+        return;
+      }
+      add(id);
     },
-    []
+    [persisted.items, add, remove]
   );
 
   const togglePin = useCallback(
     (id: string) => {
-      persist((prev) => ({
-        ...prev,
-        items: prev.items.map((i) =>
-          i.id === id ? { ...i, pinned: !i.pinned } : i
-        ),
-      }));
+      persist(
+        (prev) => ({
+          ...prev,
+          items: prev.items.map((i) =>
+            i.id === id ? { ...i, pinned: !i.pinned } : i
+          ),
+        }),
+        { skipCloud: true }
+      );
     },
     [persist]
   );
 
   const reorder = useCallback(
     (fromIndex: number, toIndex: number) => {
-      persist((prev) => {
-        const sorted = sortItems([...prev.items]);
-        const [moved] = sorted.splice(fromIndex, 1);
-        sorted.splice(toIndex, 0, moved);
-        return { ...prev, items: sorted };
-      });
+      persist(
+        (prev) => {
+          const sorted = sortItems([...prev.items]);
+          const [moved] = sorted.splice(fromIndex, 1);
+          sorted.splice(toIndex, 0, moved);
+          return { ...prev, items: sorted };
+        },
+        { skipCloud: true }
+      );
     },
     [persist]
   );
@@ -217,6 +308,7 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
       togglePin,
       reorder,
       hydrated,
+      cloudSyncing,
     }),
     [
       items,
@@ -230,6 +322,7 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
       togglePin,
       reorder,
       hydrated,
+      cloudSyncing,
     ]
   );
 
