@@ -4,11 +4,13 @@ import { useEffect } from "react";
 import { HeaderToolbar } from "./HeaderToolbar";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { TopBar } from "./TopBar";
+import { useActiveSymbolScrollReset } from "@/hooks/useActiveSymbolScrollReset";
 import { useMobileLayout } from "@/providers/MobileLayoutProvider";
 import { cn } from "@/lib/utils";
 
 export function DashboardFrame({ main }: { main: React.ReactNode }) {
   const { chartFullscreen, closeChartFullscreen } = useMobileLayout();
+  useActiveSymbolScrollReset();
 
   useEffect(() => {
     if (!chartFullscreen) return;
@@ -51,6 +53,7 @@ export function DashboardFrame({ main }: { main: React.ReactNode }) {
       <div className="flex min-h-0 flex-1">
         <MobileBottomNav />
         <main
+          data-app-scroll-root
           className={cn(
             "relative flex min-h-0 flex-1 flex-col overflow-hidden transition-[padding] duration-300 lg:pb-0",
             chartFullscreen ? "pb-0" : ""

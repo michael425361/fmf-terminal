@@ -12,6 +12,7 @@ export function DashboardMain() {
 
   return (
     <div
+      data-app-scroll-root
       className={cn(
         "flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-2 pb-14 lg:grid lg:grid-cols-12 lg:gap-3 lg:overflow-auto lg:p-3 lg:pb-3",
         chartFullscreen && "p-0 pb-0"

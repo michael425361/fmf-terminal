@@ -3,6 +3,7 @@
 import { ArrowLeft } from "lucide-react";
 import { useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { markScrollChartTop } from "@/lib/scroll-to-top";
 import { Link, useRouter } from "@/i18n/navigation";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { PersonalWatchlist } from "./PersonalWatchlist";
@@ -23,6 +24,7 @@ export function MobileWatchlistPage() {
   }, [router]);
 
   const goToChart = () => {
+    markScrollChartTop();
     router.push("/");
   };
 
