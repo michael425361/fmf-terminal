@@ -313,3 +313,7 @@ body {
 .chart-fullscreen-active {
   background: var(--background);
 }
+
+.news-card {
+  -webkit-tap-highlight-color: transparent;
+}

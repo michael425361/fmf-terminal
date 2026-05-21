@@ -58,9 +58,19 @@
     "charts": "Charts",
     "portfolio": "Portfolio",
     "watchlist": "Watchlist",
+    "news": "News",
     "journal": "Journal",
     "calendar": "Calendar",
     "analytics": "Analytics"
+  },
+  "news": {
+    "title": "News",
+    "mockNotice": "Mock feed — live news API coming soon",
+    "tabs": {
+      "us": "US Markets",
+      "cn": "A-Shares",
+      "global": "Global"
+    }
   },
   "personalWatchlist": {
     "title": "My Watchlist",

@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   LineChart,
   List,
+  Newspaper,
   Wallet,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -16,9 +17,9 @@ import { cn } from "@/lib/utils";
 
 const mobileNavItems = [
   { icon: LayoutDashboard, key: "dashboard", href: "/" as const },
-  { icon: LineChart, key: "charts", href: "/" as const },
   { icon: List, key: "watchlist", href: "/watchlist" as const },
-  { icon: BookOpen, key: "journal", href: null },
+  { icon: Newspaper, key: "news", href: "/news" as const },
+  { icon: LineChart, key: "charts", href: "/" as const },
   { icon: Calendar, key: "calendar", href: null },
 ] as const;
 

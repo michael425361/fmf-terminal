@@ -58,9 +58,19 @@
     "charts": "图表",
     "portfolio": "持仓",
     "watchlist": "自选",
+    "news": "资讯",
     "journal": "交易日记",
     "calendar": "日历",
     "analytics": "分析"
+  },
+  "news": {
+    "title": "资讯",
+    "mockNotice": "模拟资讯 — 实时新闻接口即将上线",
+    "tabs": {
+      "us": "美股资讯",
+      "cn": "A股资讯",
+      "global": "全球资讯"
+    }
   },
   "personalWatchlist": {
     "title": "我的自选",
