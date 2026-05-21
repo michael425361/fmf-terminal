@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 
+const DUPLICATE_KEY = "23505";
+
 export async function likePost(
   postId: string,
   userId: string,
@@ -9,9 +11,11 @@ export async function likePost(
   const supabase = client ?? createClient();
   const { error } = await supabase
     .from("post_likes")
-    .upsert({ post_id: postId, user_id: userId }, { onConflict: "post_id,user_id" });
+    .insert({ post_id: postId, user_id: userId });
 
-  if (error) throw new Error(error.message);
+  if (error && error.code !== DUPLICATE_KEY) {
+    throw new Error(error.message);
+  }
 }
 
 export async function unlikePost(
@@ -59,6 +63,14 @@ export async function batchHasLiked(
   for (const row of data ?? []) {
     result[row.post_id as string] = true;
   }
+
+  if (process.env.NODE_ENV === "development") {
+    console.log("[community] batchHasLiked", {
+      userId,
+      liked: Object.entries(result).filter(([, v]) => v).map(([k]) => k),
+    });
+  }
+
   return result;
 }
 

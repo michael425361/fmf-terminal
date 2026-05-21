@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { AuthButton } from "@/components/auth/AuthButton";
@@ -22,7 +22,7 @@ import {
   applyPostInteractionMeta,
   fetchPostInteractionMeta,
 } from "@/lib/community/post-meta";
-import { createPost, fetchPosts } from "@/lib/community/posts";
+import { createPost, fetchPostById, fetchPosts } from "@/lib/community/posts";
 import type {
   CommentsByPostId,
   CommunityCategory,
@@ -51,6 +51,10 @@ export function CommunityPage() {
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
+  const loadGenRef = useRef(0);
+  const profileIdRef = useRef<string | null>(null);
+  profileIdRef.current = profile?.id ?? null;
+
   const displayPosts = useMemo(() => {
     const pending = optimisticPosts.filter((p) => p.category === tab);
     const serverIds = new Set(posts.map((p) => p.id));
@@ -63,35 +67,80 @@ export function CommunityPage() {
     window.setTimeout(() => setToast(null), 2800);
   }, []);
 
+  const loadCommentsForIds = useCallback(
+    async (postIds: string[], gen: number) => {
+      if (postIds.length === 0) return;
+      try {
+        const map = await getCommentsForPosts(postIds);
+        if (loadGenRef.current !== gen) return;
+        setCommentsByPost(map);
+      } catch (err) {
+        if (process.env.NODE_ENV === "development") {
+          console.warn("[community] comments load failed:", err);
+        }
+      }
+    },
+    []
+  );
+
+  const loadInteractionMeta = useCallback(
+    async (postIds: string[], gen: number) => {
+      if (postIds.length === 0) return;
+      const meta = await fetchPostInteractionMeta(
+        postIds,
+        profileIdRef.current
+      );
+      if (loadGenRef.current !== gen) return;
+      setPosts((prev) => applyPostInteractionMeta(prev, meta));
+    },
+    []
+  );
+
   const loadPosts = useCallback(async () => {
+    const gen = ++loadGenRef.current;
     setLoading(true);
     setLoadError(null);
+
     try {
       const data = await fetchPosts(tab);
-      const postIds = data.map((p) => p.id);
+      if (loadGenRef.current !== gen) return;
 
-      const [meta, commentsMap] = await Promise.all([
-        fetchPostInteractionMeta(postIds, profile?.id ?? null),
-        getCommentsForPosts(postIds),
-      ]);
-
-      setPosts(applyPostInteractionMeta(data, meta));
-      setCommentsByPost(commentsMap);
+      setPosts(data);
       setOptimisticPosts((prev) => prev.filter((p) => p.isPending));
+
+      const postIds = data.map((p) => p.id);
+      void loadInteractionMeta(postIds, gen);
+      void loadCommentsForIds(postIds, gen);
     } catch (err) {
-      setPosts([]);
-      setCommentsByPost({});
+      if (loadGenRef.current !== gen) return;
       setLoadError(
         err instanceof Error ? err.message : t("loadError")
       );
     } finally {
-      setLoading(false);
+      if (loadGenRef.current === gen) setLoading(false);
     }
-  }, [tab, t, profile?.id]);
+  }, [tab, t, loadCommentsForIds, loadInteractionMeta]);
 
   useEffect(() => {
     void loadPosts();
   }, [loadPosts]);
+
+  useEffect(() => {
+    if (!profile?.id || posts.length === 0) return;
+
+    let cancelled = false;
+    const postIds = posts.map((p) => p.id);
+
+    void (async () => {
+      const meta = await fetchPostInteractionMeta(postIds, profile.id);
+      if (cancelled) return;
+      setPosts((prev) => applyPostInteractionMeta(prev, meta));
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profile?.id]);
 
   const refreshComments = useCallback(
     async (postIds: string[]) => {
@@ -107,6 +156,23 @@ export function CommunityPage() {
       }
     },
     [showToast, t]
+  );
+
+  const patchPostFromServer = useCallback(
+    async (postId: string, patch: Partial<CommunityPost>) => {
+      try {
+        const refreshed = await fetchPostById(postId);
+        if (!refreshed) return;
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId ? { ...refreshed, ...patch } : p
+          )
+        );
+      } catch {
+        /* keep optimistic values */
+      }
+    },
+    []
   );
 
   const handleAddComment = useCallback(
@@ -133,6 +199,7 @@ export function CommunityPage() {
             .filter((c) => c.id !== pending.id)
             .concat(created),
         }));
+        void patchPostFromServer(postId, {});
         showPageToast(t("comments.posted"));
       } catch {
         setCommentsByPost((prev) => ({
@@ -149,73 +216,85 @@ export function CommunityPage() {
         showToast(t("comments.postFailed"), "error");
       }
     },
-    [profile, showPageToast, showToast, t]
+    [profile, patchPostFromServer, showPageToast, showToast, t]
   );
 
   const handleLikeToggle = useCallback(
-    async (post: CommunityPost) => {
+    async (postId: string) => {
       if (!profile || !requireAuth("favorite")) return;
 
-      const wasLiked = post.likedByMe ?? false;
-      const nextLiked = !wasLiked;
-      const delta = nextLiked ? 1 : -1;
+      let wasLiked = false;
+      let nextLiked = false;
 
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.id === post.id
+      setPosts((prev) => {
+        const post = prev.find((p) => p.id === postId);
+        if (!post) return prev;
+        wasLiked = post.likedByMe ?? false;
+        nextLiked = !wasLiked;
+        const delta = nextLiked ? 1 : -1;
+        return prev.map((p) =>
+          p.id === postId
             ? {
                 ...p,
                 likedByMe: nextLiked,
                 likes: Math.max(0, p.likes + delta),
               }
             : p
-        )
-      );
+        );
+      });
 
       try {
-        if (nextLiked) await likePost(post.id, profile.id);
-        else await unlikePost(post.id, profile.id);
+        if (nextLiked) await likePost(postId, profile.id);
+        else await unlikePost(postId, profile.id);
+        await patchPostFromServer(postId, { likedByMe: nextLiked });
       } catch {
-        setPosts((prev) =>
-          prev.map((p) =>
-            p.id === post.id
+        setPosts((prev) => {
+          const post = prev.find((p) => p.id === postId);
+          if (!post) return prev;
+          const delta = nextLiked ? 1 : -1;
+          return prev.map((p) =>
+            p.id === postId
               ? {
                   ...p,
                   likedByMe: wasLiked,
                   likes: Math.max(0, p.likes - delta),
                 }
               : p
-          )
-        );
+          );
+        });
         showToast(t("likes.failed"), "error");
       }
     },
-    [profile, requireAuth, showToast, t]
+    [profile, requireAuth, patchPostFromServer, showToast, t]
   );
 
   const handleBookmarkToggle = useCallback(
-    async (post: CommunityPost) => {
+    async (postId: string) => {
       if (!profile || !requireAuth("favorite")) return;
 
-      const wasSaved = post.bookmarkedByMe ?? false;
-      const nextSaved = !wasSaved;
+      let wasSaved = false;
+      let nextSaved = false;
 
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.id === post.id ? { ...p, bookmarkedByMe: nextSaved } : p
-        )
-      );
+      setPosts((prev) => {
+        const post = prev.find((p) => p.id === postId);
+        if (!post) return prev;
+        wasSaved = post.bookmarkedByMe ?? false;
+        nextSaved = !wasSaved;
+        return prev.map((p) =>
+          p.id === postId ? { ...p, bookmarkedByMe: nextSaved } : p
+        );
+      });
 
       try {
-        if (nextSaved) await bookmarkPost(post.id, profile.id);
-        else await unbookmarkPost(post.id, profile.id);
+        if (nextSaved) await bookmarkPost(postId, profile.id);
+        else await unbookmarkPost(postId, profile.id);
         showPageToast(
           nextSaved ? t("bookmarks.saved") : t("bookmarks.removed")
         );
       } catch {
         setPosts((prev) =>
           prev.map((p) =>
-            p.id === post.id ? { ...p, bookmarkedByMe: wasSaved } : p
+            p.id === postId ? { ...p, bookmarkedByMe: wasSaved } : p
           )
         );
         showToast(t("bookmarks.failed"), "error");
@@ -283,10 +362,15 @@ export function CommunityPage() {
         setOptimisticPosts((prev) =>
           prev.filter((p) => p.id !== optimistic.id)
         );
-        setPosts((prev) => {
-          const withoutDup = prev.filter((p) => p.id !== created.id);
-          return sortPostsByDate([created, ...withoutDup]);
-        });
+        if (category === tab) {
+          setPosts((prev) => {
+            const withoutDup = prev.filter((p) => p.id !== created.id);
+            return sortPostsByDate([
+              { ...created, likedByMe: false, bookmarkedByMe: false },
+              ...withoutDup,
+            ]);
+          });
+        }
         showPageToast(t("createPost.published"));
         await loadPosts();
       } catch {
@@ -296,7 +380,7 @@ export function CommunityPage() {
         showPageToast(t("createPost.failed"));
       }
     },
-    [profile, showPageToast, t, loadPosts]
+    [profile, tab, showPageToast, t, loadPosts]
   );
 
   return (
@@ -353,11 +437,11 @@ export function CommunityPage() {
 
           {loading ? (
             <CommunityPostSkeleton />
-          ) : displayPosts.length === 0 ? (
+          ) : displayPosts.length === 0 && !loadError ? (
             <p className="py-12 text-center text-xs text-[var(--muted)]">
               {t("empty")}
             </p>
-          ) : (
+          ) : displayPosts.length === 0 ? null : (
             <div className="flex flex-col gap-3">
               {displayPosts.map((post) => (
                 <CommunityPostCard
@@ -366,12 +450,10 @@ export function CommunityPage() {
                   comments={getCommentsForPost(commentsByPost, post.id)}
                   commentsLoading={commentsLoading}
                   onAddComment={handleAddComment}
-                  onLikeToggle={() => void handleLikeToggle(post)}
-                  onBookmarkToggle={() => void handleBookmarkToggle(post)}
+                  onLikeToggle={handleLikeToggle}
+                  onBookmarkToggle={handleBookmarkToggle}
                   onRequireAuth={() => requireAuth("comment")}
-                  onCommentsOpen={() =>
-                    void refreshComments([post.id])
-                  }
+                  onCommentsOpen={() => void refreshComments([post.id])}
                 />
               ))}
             </div>

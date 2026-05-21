@@ -26,8 +26,8 @@ interface CommunityPostCardProps {
     body: string,
     parentId: string | null
   ) => Promise<void>;
-  onLikeToggle: () => void;
-  onBookmarkToggle: () => void;
+  onLikeToggle: (postId: string) => void;
+  onBookmarkToggle: (postId: string) => void;
   onRequireAuth: () => boolean;
   onCommentsOpen?: () => void;
   className?: string;
@@ -115,7 +115,7 @@ export function CommunityPostCard({
           <div className="mt-3 flex flex-wrap items-center gap-3 text-[var(--muted)]">
             <button
               type="button"
-              onClick={onLikeToggle}
+              onClick={() => onLikeToggle(post.id)}
               aria-pressed={liked}
               aria-label={liked ? t("likes.unlike") : t("likes.like")}
               className={cn(
@@ -155,7 +155,7 @@ export function CommunityPostCard({
             </button>
             <button
               type="button"
-              onClick={onBookmarkToggle}
+              onClick={() => onBookmarkToggle(post.id)}
               aria-pressed={bookmarked}
               aria-label={
                 bookmarked ? t("bookmarks.remove") : t("bookmarks.save")

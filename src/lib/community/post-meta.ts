@@ -17,12 +17,18 @@ export async function fetchPostInteractionMeta(
     return { likedByMe: {}, bookmarkedByMe: {} };
   }
 
-  const [likedByMe, bookmarkedByMe] = await Promise.all([
-    batchHasLiked(postIds, userId, client),
-    batchHasBookmarked(postIds, userId, client),
-  ]);
-
-  return { likedByMe, bookmarkedByMe };
+  try {
+    const [likedByMe, bookmarkedByMe] = await Promise.all([
+      batchHasLiked(postIds, userId, client),
+      batchHasBookmarked(postIds, userId, client),
+    ]);
+    return { likedByMe, bookmarkedByMe };
+  } catch (err) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[community] interaction meta failed:", err);
+    }
+    return { likedByMe: {}, bookmarkedByMe: {} };
+  }
 }
 
 export function applyPostInteractionMeta(

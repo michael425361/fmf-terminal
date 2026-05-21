@@ -7,9 +7,12 @@ export async function bookmarkPost(
   client?: SupabaseClient
 ): Promise<void> {
   const supabase = client ?? createClient();
-  const { error } = await supabase
-    .from("bookmarks")
-    .upsert({ post_id: postId, user_id: userId }, { onConflict: "post_id,user_id" });
+  const { error } = await supabase.from("bookmarks").insert({
+    post_id: postId,
+    user_id: userId,
+  });
+
+  if (error?.code === "23505") return;
 
   if (error) throw new Error(error.message);
 }

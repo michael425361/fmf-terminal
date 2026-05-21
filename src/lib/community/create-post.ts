@@ -59,12 +59,3 @@ export function sortPostsByDate(posts: CommunityPost[]): CommunityPost[] {
       new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   );
 }
-
-export function mergePostsForCategory(
-  mock: CommunityPost[],
-  local: CommunityPost[],
-  category: CommunityCategory
-): CommunityPost[] {
-  const userInTab = local.filter((p) => p.category === category);
-  return sortPostsByDate([...userInTab, ...mock]);
-}

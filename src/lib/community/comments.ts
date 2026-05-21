@@ -10,8 +10,11 @@ export interface CommentRow {
   user_id: string;
   content: string;
   created_at: string;
-  profiles?: { username: string; avatar_url: string | null } | null;
 }
+
+type ProfileSnippet = { username: string; avatar_url: string | null };
+
+const COMMENT_COLUMNS = "id, post_id, user_id, content, created_at";
 
 function hashHue(input: string): number {
   let h = 0;
@@ -22,8 +25,11 @@ function hashHue(input: string): number {
   return Math.abs(h) % 360;
 }
 
-function rowToComment(row: CommentRow): CommunityComment {
-  const username = row.profiles?.username ?? "FMF_User";
+function rowToComment(
+  row: CommentRow,
+  profile?: ProfileSnippet | null
+): CommunityComment {
+  const username = profile?.username ?? "FMF_User";
   return {
     id: row.id,
     postId: row.post_id,
@@ -32,15 +38,49 @@ function rowToComment(row: CommentRow): CommunityComment {
     username,
     avatarInitials: initialsFromName(username),
     avatarHue: hashHue(row.user_id),
-    avatarUrl: row.profiles?.avatar_url ?? null,
+    avatarUrl: profile?.avatar_url ?? null,
     publishedAt: row.created_at,
     body: row.content,
     likes: 0,
   };
 }
 
-const COMMENT_SELECT =
-  "id, post_id, user_id, content, created_at, profiles(username, avatar_url)";
+async function fetchProfileMap(
+  userIds: string[],
+  client: SupabaseClient
+): Promise<Record<string, ProfileSnippet>> {
+  if (userIds.length === 0) return {};
+
+  const { data, error } = await client
+    .from("profiles")
+    .select("id, username, avatar_url")
+    .in("id", userIds);
+
+  if (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[community] profile lookup failed:", error.message);
+    }
+    return {};
+  }
+
+  const map: Record<string, ProfileSnippet> = {};
+  for (const row of data ?? []) {
+    map[row.id as string] = {
+      username: row.username as string,
+      avatar_url: (row.avatar_url as string | null) ?? null,
+    };
+  }
+  return map;
+}
+
+async function enrichComments(
+  rows: CommentRow[],
+  client: SupabaseClient
+): Promise<CommunityComment[]> {
+  const userIds = [...new Set(rows.map((r) => r.user_id))];
+  const profiles = await fetchProfileMap(userIds, client);
+  return rows.map((row) => rowToComment(row, profiles[row.user_id]));
+}
 
 export async function getComments(
   postId: string,
@@ -49,12 +89,12 @@ export async function getComments(
   const supabase = client ?? createClient();
   const { data, error } = await supabase
     .from("comments")
-    .select(COMMENT_SELECT)
+    .select(COMMENT_COLUMNS)
     .eq("post_id", postId)
     .order("created_at", { ascending: true });
 
   if (error) throw new Error(error.message);
-  return ((data ?? []) as CommentRow[]).map(rowToComment);
+  return enrichComments((data ?? []) as CommentRow[], supabase);
 }
 
 /** Batch-load comments for many posts (avoids N+1). */
@@ -67,19 +107,22 @@ export async function getCommentsForPosts(
   const supabase = client ?? createClient();
   const { data, error } = await supabase
     .from("comments")
-    .select(COMMENT_SELECT)
+    .select(COMMENT_COLUMNS)
     .in("post_id", postIds)
     .order("created_at", { ascending: true });
 
   if (error) throw new Error(error.message);
 
+  const rows = (data ?? []) as CommentRow[];
+  const enriched = await enrichComments(rows, supabase);
+
   const map: CommentsByPostId = {};
   for (const id of postIds) map[id] = [];
 
-  for (const row of (data ?? []) as CommentRow[]) {
-    const list = map[row.post_id] ?? [];
-    list.push(rowToComment(row));
-    map[row.post_id] = list;
+  for (const comment of enriched) {
+    const list = map[comment.postId] ?? [];
+    list.push(comment);
+    map[comment.postId] = list;
   }
 
   return map;
@@ -99,11 +142,15 @@ export async function createComment(
       user_id: author.id,
       content: content.trim(),
     })
-    .select(COMMENT_SELECT)
+    .select(COMMENT_COLUMNS)
     .single();
 
   if (error) throw new Error(error.message);
-  return rowToComment(data as CommentRow);
+  const row = data as CommentRow;
+  return rowToComment(row, {
+    username: author.username,
+    avatar_url: author.avatarUrl,
+  });
 }
 
 export async function deleteComment(

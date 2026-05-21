@@ -25,6 +25,9 @@ export interface PostRow {
   view_count: number;
 }
 
+const POST_COLUMNS =
+  "id, created_at, updated_at, user_id, username, avatar_url, category, title, content, ticker_tags, like_count, comment_count, view_count";
+
 function hashHue(input: string): number {
   let h = 0;
   for (let i = 0; i < input.length; i++) {
@@ -56,6 +59,20 @@ export function postRowToCommunityPost(row: PostRow): CommunityPost {
   };
 }
 
+function logPostsFetch(
+  category: CommunityCategory,
+  data: PostRow[] | null,
+  error: { message: string } | null
+) {
+  if (process.env.NODE_ENV !== "development") return;
+  console.log("[community] fetchPosts", {
+    category,
+    count: data?.length ?? 0,
+    error: error?.message ?? null,
+    ids: data?.map((r) => r.id) ?? [],
+  });
+}
+
 export async function fetchPosts(
   category: CommunityCategory,
   client?: SupabaseClient
@@ -64,17 +81,35 @@ export async function fetchPosts(
 
   const { data, error } = await supabase
     .from("posts")
-    .select(
-      "id, created_at, updated_at, user_id, username, avatar_url, category, title, content, ticker_tags, like_count, comment_count, view_count"
-    )
+    .select(POST_COLUMNS)
     .eq("category", category)
     .order("created_at", { ascending: false });
+
+  logPostsFetch(category, data as PostRow[] | null, error);
 
   if (error) {
     throw new Error(error.message);
   }
 
   return ((data ?? []) as PostRow[]).map(postRowToCommunityPost);
+}
+
+export async function fetchPostById(
+  postId: string,
+  client?: SupabaseClient
+): Promise<CommunityPost | null> {
+  const supabase = client ?? createClient();
+
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POST_COLUMNS)
+    .eq("id", postId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+
+  return postRowToCommunityPost(data as PostRow);
 }
 
 export async function createPost(
@@ -95,16 +130,18 @@ export async function createPost(
       content: draft.content.trim(),
       ticker_tags: parseStockTags(draft.tagsInput),
     })
-    .select(
-      "id, created_at, updated_at, user_id, username, avatar_url, category, title, content, ticker_tags, like_count, comment_count, view_count"
-    )
+    .select(POST_COLUMNS)
     .single();
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return postRowToCommunityPost(data as PostRow);
+  const post = postRowToCommunityPost(data as PostRow);
+  if (process.env.NODE_ENV === "development") {
+    console.log("[community] createPost", { id: post.id, category: post.category });
+  }
+  return post;
 }
 
 export async function deletePost(
