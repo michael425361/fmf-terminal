@@ -64,9 +64,7 @@
   },
   "personalWatchlist": {
     "title": "我的自选",
-    "openSheet": "打开自选列表",
-    "closeSheet": "关闭自选列表",
-    "symbolsShort": "只",
+    "backToChart": "返回图表",
     "detailTitle": "行情详情",
     "empty": "自选列表为空。使用搜索和星标按钮添加标的。",
     "addToWatchlist": "加入自选",

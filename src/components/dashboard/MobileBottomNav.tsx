@@ -10,43 +10,50 @@ import {
   Wallet,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Link, usePathname } from "@/i18n/navigation";
 import { useMobileLayout } from "@/providers/MobileLayoutProvider";
 import { cn } from "@/lib/utils";
 
+const mobileNavItems = [
+  { icon: LayoutDashboard, key: "dashboard", href: "/" as const },
+  { icon: LineChart, key: "charts", href: "/" as const },
+  { icon: List, key: "watchlist", href: "/watchlist" as const },
+  { icon: BookOpen, key: "journal", href: null },
+  { icon: Calendar, key: "calendar", href: null },
+] as const;
+
 const desktopNavKeys = [
-  { icon: LayoutDashboard, key: "dashboard", active: true },
-  { icon: LineChart, key: "charts", active: false },
-  { icon: Wallet, key: "portfolio", active: false },
-  { icon: BookOpen, key: "journal", active: false },
-  { icon: Calendar, key: "calendar", active: false },
-  { icon: BarChart3, key: "analytics", active: false },
+  { icon: LayoutDashboard, key: "dashboard" },
+  { icon: LineChart, key: "charts" },
+  { icon: Wallet, key: "portfolio" },
+  { icon: BookOpen, key: "journal" },
+  { icon: Calendar, key: "calendar" },
+  { icon: BarChart3, key: "analytics" },
 ] as const;
 
-const mobileNavKeys = [
-  { icon: LayoutDashboard, key: "dashboard", active: true },
-  { icon: LineChart, key: "charts", active: false },
-  { icon: List, key: "watchlist", active: false, opensWatchlist: true },
-  { icon: BookOpen, key: "journal", active: false },
-  { icon: Calendar, key: "calendar", active: false },
-] as const;
-
-export function Sidebar() {
+export function MobileBottomNav() {
   const t = useTranslations("nav");
-  const { watchlistOpen, openWatchlist, closeWatchlist, chartFullscreen } =
-    useMobileLayout();
+  const pathname = usePathname();
+  const { chartFullscreen } = useMobileLayout();
+
+  const isActive = (href: string | null) => {
+    if (!href) return false;
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   return (
     <>
       <aside className="hidden w-14 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--surface)] lg:flex">
         <nav className="flex flex-1 flex-col items-center gap-1 py-3">
-          {desktopNavKeys.map(({ icon: Icon, key, active }) => (
+          {desktopNavKeys.map(({ icon: Icon, key }) => (
             <button
               key={key}
               type="button"
               title={t(key)}
               className={cn(
                 "flex h-10 w-10 items-center justify-center rounded transition",
-                active
+                key === "dashboard"
                   ? "bg-[var(--accent-dim)]/30 text-[var(--accent)]"
                   : "text-[var(--muted)] hover:bg-[var(--surface-elevated)] hover:text-[var(--foreground)]"
               )}
@@ -65,29 +72,32 @@ export function Sidebar() {
         )}
         aria-hidden={chartFullscreen}
       >
-        {mobileNavKeys.map((item) => {
-          const { icon: Icon, key, active } = item;
-          const opensWatchlist =
-            "opensWatchlist" in item && item.opensWatchlist;
-          const isWatchlistActive = opensWatchlist && watchlistOpen;
+        {mobileNavItems.map(({ icon: Icon, key, href }) => {
+          const active = href ? isActive(href) : false;
+          const className = cn(
+            "flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] transition",
+            active ? "text-[var(--accent)]" : "text-[var(--muted)]"
+          );
+
+          if (href) {
+            return (
+              <Link
+                key={key}
+                href={href}
+                className={className}
+                aria-label={t(key)}
+              >
+                <Icon className="h-4 w-4" strokeWidth={1.75} />
+                <span>{t(key)}</span>
+              </Link>
+            );
+          }
 
           return (
             <button
               key={key}
               type="button"
-              onClick={() => {
-                if (opensWatchlist) {
-                  if (watchlistOpen) closeWatchlist();
-                  else openWatchlist();
-                }
-              }}
-              className={cn(
-                "flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] transition",
-                isWatchlistActive || (active && !opensWatchlist)
-                  ? "text-[var(--accent)]"
-                  : "text-[var(--muted)]"
-              )}
-              aria-expanded={opensWatchlist ? watchlistOpen : undefined}
+              className={className}
               aria-label={t(key)}
             >
               <Icon className="h-4 w-4" strokeWidth={1.75} />

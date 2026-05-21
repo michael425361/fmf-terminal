@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { HeaderToolbar } from "./HeaderToolbar";
-import { Sidebar } from "./Sidebar";
+import { MobileBottomNav } from "./MobileBottomNav";
 import { TopBar } from "./TopBar";
 import { useMobileLayout } from "@/providers/MobileLayoutProvider";
 import { cn } from "@/lib/utils";
@@ -49,7 +49,7 @@ export function DashboardFrame({ main }: { main: React.ReactNode }) {
       </div>
 
       <div className="flex min-h-0 flex-1">
-        <Sidebar />
+        <MobileBottomNav />
         <main
           className={cn(
             "relative flex min-h-0 flex-1 flex-col overflow-hidden transition-[padding] duration-300 lg:pb-0",

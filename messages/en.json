@@ -64,9 +64,7 @@
   },
   "personalWatchlist": {
     "title": "My Watchlist",
-    "openSheet": "Open watchlist",
-    "closeSheet": "Close watchlist",
-    "symbolsShort": "symbols",
+    "backToChart": "Back to chart",
     "detailTitle": "Market Detail",
     "empty": "No symbols in your watchlist. Search and add assets with the star button.",
     "addToWatchlist": "Add to Watchlist",

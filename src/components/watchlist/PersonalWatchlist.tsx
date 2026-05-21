@@ -10,16 +10,17 @@ import { useMarketData } from "@/providers/MarketDataProvider";
 import { useWatchlist } from "@/providers/WatchlistProvider";
 import type { WatchlistItemView } from "@/lib/watchlist/types";
 import { Sparkline } from "./Sparkline";
+import { FavoriteButton } from "./FavoriteButton";
 import { WatchlistSkeleton } from "@/components/market/MarketSkeleton";
 import { cn } from "@/lib/utils";
 
 interface PersonalWatchlistProps {
-  mobile?: boolean;
+  variant?: "panel" | "page";
   onSymbolSelect?: () => void;
 }
 
 export function PersonalWatchlist({
-  mobile = false,
+  variant = "panel",
   onSymbolSelect,
 }: PersonalWatchlistProps = {}) {
   const t = useTranslations("personalWatchlist");
@@ -29,27 +30,28 @@ export function PersonalWatchlist({
     useMarketData();
   const loading = !hydrated || (status === "loading" && items.length === 0);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const isPage = variant === "page";
 
-  return (
-    <section
-      className={cn(
-        "panel flex flex-1 flex-col overflow-hidden",
-        mobile ? "min-h-[200px] border-0" : "min-h-[320px]"
-      )}
-    >
-      <div className="panel-header">
-        <span>{t("title")}</span>
-        <span className="font-mono text-[var(--accent)]">{items.length}</span>
-      </div>
-
+  const list = (
+    <>
       {loading ? (
         <WatchlistSkeleton />
       ) : items.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center p-6 text-center text-xs text-[var(--muted)]">
+        <div
+          className={cn(
+            "flex items-center justify-center p-6 text-center text-xs text-[var(--muted)]",
+            isPage ? "min-h-[40vh]" : "flex-1"
+          )}
+        >
           {t("empty")}
         </div>
       ) : (
-        <ul className="scrollbar-thin flex-1 divide-y divide-[var(--border)]/40 overflow-auto">
+        <ul
+          className={cn(
+            "divide-y divide-[var(--border)]/40",
+            isPage ? "" : "scrollbar-thin flex-1 overflow-auto"
+          )}
+        >
           {items.map((item, index) => (
             <WatchlistRow
               key={item.id}
@@ -63,7 +65,7 @@ export function PersonalWatchlist({
                 setActive(item.id);
                 onSymbolSelect?.();
               }}
-              mobile={mobile}
+              variant={variant}
               onRemove={() => remove(item.id)}
               onTogglePin={() => togglePin(item.id)}
               dragIndex={dragIndex}
@@ -73,6 +75,20 @@ export function PersonalWatchlist({
           ))}
         </ul>
       )}
+    </>
+  );
+
+  if (isPage) {
+    return <div className="flex flex-col">{list}</div>;
+  }
+
+  return (
+    <section className="panel flex min-h-[320px] flex-1 flex-col overflow-hidden">
+      <div className="panel-header">
+        <span>{t("title")}</span>
+        <span className="font-mono text-[var(--accent)]">{items.length}</span>
+      </div>
+      {list}
     </section>
   );
 }
@@ -90,7 +106,7 @@ function WatchlistRow({
   dragIndex,
   setDragIndex,
   onReorder,
-  mobile = false,
+  variant = "panel",
 }: {
   item: WatchlistItemView;
   index: number;
@@ -104,9 +120,10 @@ function WatchlistRow({
   dragIndex: number | null;
   setDragIndex: (i: number | null) => void;
   onReorder: (from: number, to: number) => void;
-  mobile?: boolean;
+  variant?: "panel" | "page";
 }) {
   const rowRef = useRef<HTMLLIElement>(null);
+  const isPage = variant === "page";
   const positive = quote ? isQuotePositive(quote) : true;
   const flash =
     quote && previous && quote.price !== previous.price
@@ -118,7 +135,7 @@ function WatchlistRow({
   return (
     <li
       ref={rowRef}
-      draggable={!mobile}
+      draggable={!isPage}
       onDragStart={() => setDragIndex(index)}
       onDragEnd={() => setDragIndex(null)}
       onDragOver={(e) => e.preventDefault()}
@@ -130,7 +147,8 @@ function WatchlistRow({
       }}
       onClick={onSelect}
       className={cn(
-        "group flex cursor-pointer items-center gap-2 px-2 py-2.5 transition",
+        "group flex cursor-pointer items-center gap-3 transition",
+        isPage ? "px-4 py-3.5" : "gap-2 px-2 py-2.5",
         "hover:bg-[var(--surface-elevated)]",
         active && "watchlist-active glow-active",
         dragIndex === index && "opacity-50",
@@ -138,20 +156,32 @@ function WatchlistRow({
       )}
       title={`${item.name} (${item.symbol})`}
     >
-      {!mobile && (
+      {!isPage && (
         <GripVertical className="h-3.5 w-3.5 shrink-0 cursor-grab text-[var(--muted)] opacity-40 group-hover:opacity-100" />
       )}
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className="font-mono text-xs font-semibold text-[var(--foreground)]">
+          <span
+            className={cn(
+              "font-mono font-semibold text-[var(--foreground)]",
+              isPage ? "text-sm" : "text-xs"
+            )}
+          >
             {item.shortLabel}
           </span>
           {item.pinned && (
             <Pin className="h-3 w-3 text-[var(--accent)]" fill="currentColor" />
           )}
         </div>
-        <div className="truncate text-[10px] text-[var(--muted)]">{item.name}</div>
+        <div
+          className={cn(
+            "truncate text-[var(--muted)]",
+            isPage ? "text-xs" : "text-[10px]"
+          )}
+        >
+          {item.name}
+        </div>
       </div>
 
       <Sparkline data={sparkline} positive={positive} />
@@ -159,7 +189,12 @@ function WatchlistRow({
       <div className="shrink-0 text-right">
         {quote ? (
           <>
-            <div className="font-mono text-xs font-medium">
+            <div
+              className={cn(
+                "font-mono font-medium tabular-nums",
+                isPage ? "text-sm" : "text-xs"
+              )}
+            >
               {formatQuotePrice(
                 quote.price,
                 quote.priceDecimals ?? 2,
@@ -168,7 +203,8 @@ function WatchlistRow({
             </div>
             <div
               className={cn(
-                "font-mono text-[10px]",
+                "font-mono tabular-nums",
+                isPage ? "text-xs" : "text-[10px]",
                 getQuoteColorClass(quote)
               )}
             >
@@ -180,34 +216,38 @@ function WatchlistRow({
         )}
       </div>
 
-      <div className="flex shrink-0 flex-col gap-0.5 opacity-0 transition group-hover:opacity-100">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onTogglePin();
-          }}
-          className="rounded p-0.5 text-[var(--muted)] hover:text-[var(--accent)]"
-          aria-label="pin"
-        >
-          {item.pinned ? (
-            <PinOff className="h-3 w-3" />
-          ) : (
-            <Pin className="h-3 w-3" />
-          )}
-        </button>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-          className="rounded p-0.5 text-[var(--muted)] hover:text-[var(--negative)]"
-          aria-label="remove"
-        >
-          <X className="h-3 w-3" />
-        </button>
-      </div>
+      {isPage ? (
+        <FavoriteButton assetId={item.id} className="shrink-0" />
+      ) : (
+        <div className="flex shrink-0 flex-col gap-0.5 opacity-0 transition group-hover:opacity-100">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onTogglePin();
+            }}
+            className="rounded p-0.5 text-[var(--muted)] hover:text-[var(--accent)]"
+            aria-label="pin"
+          >
+            {item.pinned ? (
+              <PinOff className="h-3 w-3" />
+            ) : (
+              <Pin className="h-3 w-3" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+            className="rounded p-0.5 text-[var(--muted)] hover:text-[var(--negative)]"
+            aria-label="remove"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      )}
     </li>
   );
 }
