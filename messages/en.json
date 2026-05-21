@@ -65,7 +65,10 @@
   },
   "news": {
     "title": "News",
-    "mockNotice": "Mock feed — live news API coming soon",
+    "updated": "Updated",
+    "stale": "cached",
+    "refresh": "Refresh news",
+    "empty": "No headlines available for this feed.",
     "tabs": {
       "us": "US Markets",
       "cn": "A-Shares",

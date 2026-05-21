@@ -65,7 +65,10 @@
   },
   "news": {
     "title": "资讯",
-    "mockNotice": "模拟资讯 — 实时新闻接口即将上线",
+    "updated": "更新于",
+    "stale": "缓存",
+    "refresh": "刷新资讯",
+    "empty": "该栏目暂无资讯。",
     "tabs": {
       "us": "美股资讯",
       "cn": "A股资讯",

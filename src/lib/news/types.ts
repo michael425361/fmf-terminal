@@ -1,11 +1,20 @@
 export type NewsCategory = "us" | "cn" | "global";
 
-export interface NewsArticle {
+export interface NormalizedNewsArticle {
   id: string;
+  title: string;
+  summary: string;
+  source: string;
   category: NewsCategory;
-  title: { en: string; zh: string };
-  source: { en: string; zh: string };
-  time: string;
-  summary: { en: string; zh: string };
-  tag?: { en: string; zh: string };
+  publishedAt: string;
+  url: string;
+  tag?: string;
+}
+
+export interface NewsFeedResponse {
+  category: NewsCategory;
+  articles: NormalizedNewsArticle[];
+  fetchedAt: number;
+  stale?: boolean;
+  errors?: string[];
 }

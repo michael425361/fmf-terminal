@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
-import { getNewsByCategory } from "@/lib/news/mock-news";
+import { useNewsFeed } from "@/hooks/useNewsFeed";
 import type { NewsCategory } from "@/lib/news/types";
 import { NewsCard } from "./NewsCard";
+import { NewsSkeleton } from "./NewsSkeleton";
 import { cn } from "@/lib/utils";
 
 const TABS: NewsCategory[] = ["us", "cn", "global"];
@@ -14,7 +16,10 @@ const TABS: NewsCategory[] = ["us", "cn", "global"];
 export function NewsPage() {
   const t = useTranslations("news");
   const [tab, setTab] = useState<NewsCategory>("us");
-  const articles = getNewsByCategory(tab);
+  const { data, loading, error, refetch } = useNewsFeed(tab);
+
+  const articles = data?.articles ?? [];
+  const feedErrors = data?.errors ?? [];
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--background)]">
@@ -29,6 +34,17 @@ export function NewsPage() {
           <h1 className="flex-1 text-sm font-semibold tracking-wide text-[var(--foreground)] lg:text-base">
             {t("title")}
           </h1>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            disabled={loading}
+            className="flex h-8 w-8 items-center justify-center rounded border border-[var(--border)] text-[var(--muted)] transition hover:text-[var(--accent)] disabled:opacity-50"
+            aria-label={t("refresh")}
+          >
+            <RefreshCw
+              className={cn("h-3.5 w-3.5", loading && "animate-spin")}
+            />
+          </button>
         </div>
 
         <div
@@ -61,14 +77,42 @@ export function NewsPage() {
         className="scrollbar-thin min-h-0 flex-1 overflow-y-auto pb-[4.5rem] lg:pb-8"
       >
         <div className="mx-auto max-w-3xl px-4 py-4 lg:px-6 lg:py-6">
-          <p className="mb-4 font-mono text-[10px] uppercase tracking-widest text-[var(--muted)]">
-            {t("mockNotice")}
-          </p>
-          <div className="flex flex-col gap-3">
-            {articles.map((article) => (
-              <NewsCard key={article.id} article={article} />
-            ))}
-          </div>
+          {error && (
+            <p className="mb-3 rounded border border-[var(--negative)]/40 bg-[var(--negative)]/10 px-3 py-2 text-xs text-[var(--negative)]">
+              {error}
+            </p>
+          )}
+
+          {feedErrors.length > 0 && !error && (
+            <p className="mb-3 font-mono text-[10px] text-[var(--muted)]">
+              {feedErrors[0]}
+            </p>
+          )}
+
+          {data?.fetchedAt && !loading && (
+            <p className="mb-4 font-mono text-[10px] uppercase tracking-widest text-[var(--muted)]">
+              {t("updated")}{" "}
+              {new Date(data.fetchedAt).toLocaleTimeString(undefined, {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+              {data.stale ? ` · ${t("stale")}` : ""}
+            </p>
+          )}
+
+          {loading && articles.length === 0 ? (
+            <NewsSkeleton />
+          ) : articles.length === 0 ? (
+            <p className="py-12 text-center text-xs text-[var(--muted)]">
+              {t("empty")}
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {articles.map((article) => (
+                <NewsCard key={article.id} article={article} />
+              ))}
+            </div>
+          )}
         </div>
       </main>
 
