@@ -1,6 +1,7 @@
 import type { MarketCategory } from "./types";
 import type { AssetCatalogEntry, AssetType } from "@/lib/watchlist/types";
 import { CATALOG_BY_SYMBOL } from "@/lib/watchlist/catalog";
+import { padHKCode } from "./symbol-normalize";
 
 export interface YahooSearchQuote {
   symbol: string;
@@ -96,10 +97,11 @@ export function yahooQuoteToCatalogEntry(
 
   const upper = symbol.toUpperCase();
   if (upper.endsWith(".HK")) {
+    const code = padHKCode(symbol.split(".")[0]);
     return {
-      id: catalogIdFromSymbol(symbol),
-      symbol,
-      shortLabel: symbol.split(".")[0],
+      id: `hk-${code}`,
+      symbol: `${code}.HK`,
+      shortLabel: code,
       name,
       assetType: "hk_stock",
       category: "hk",
@@ -107,10 +109,11 @@ export function yahooQuoteToCatalogEntry(
     };
   }
   if (upper.endsWith(".TW")) {
+    const code = symbol.split(".")[0].replace(/\D/g, "");
     return {
-      id: catalogIdFromSymbol(symbol),
-      symbol,
-      shortLabel: symbol.split(".")[0],
+      id: `tw-${code}`,
+      symbol: `${code}.TW`,
+      shortLabel: code,
       name,
       assetType: "tw_stock",
       category: "tw",

@@ -81,6 +81,7 @@ export const CATEGORY_ORDER: MarketCategory[] = [
   "us",
   "china",
   "hk",
+  "tw",
   "fx",
   "crypto",
   "commodities",

@@ -96,7 +96,13 @@ export function buildCoreMetrics(
     { key: "high", value: fmt(high) },
     { key: "low", value: fmt(low) },
     { key: "prevClose", value: fmt(prevClose) },
-    { key: "volume", value: formatVolume(volume) },
+    {
+      key: "volume",
+      value: formatVolume(
+        volume,
+        cat === "hk" || cat === "tw" ? cat : undefined
+      ),
+    },
   ];
 }
 

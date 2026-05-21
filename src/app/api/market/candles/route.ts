@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchCandleSeries } from "@/lib/market-data/candles";
+import { normalizeYahooSymbol } from "@/lib/market-data/symbol-normalize";
 import type { ChartTimeframe } from "@/lib/chart/types";
 import { TIMEFRAME_CONFIG } from "@/lib/chart/timeframes";
 
@@ -9,12 +10,14 @@ const VALID_TF = new Set(Object.keys(TIMEFRAME_CONFIG));
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const symbol = searchParams.get("symbol");
+  const rawSymbol = searchParams.get("symbol");
   const timeframe = (searchParams.get("timeframe") ?? "1D") as ChartTimeframe;
 
-  if (!symbol) {
+  if (!rawSymbol) {
     return NextResponse.json({ error: "symbol required" }, { status: 400 });
   }
+
+  const symbol = normalizeYahooSymbol(rawSymbol);
 
   if (!VALID_TF.has(timeframe)) {
     return NextResponse.json({ error: "invalid timeframe" }, { status: 400 });

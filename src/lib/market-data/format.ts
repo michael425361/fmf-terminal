@@ -1,4 +1,5 @@
 import type { MarketQuote } from "./types";
+import type { DetectedMarket } from "./symbol-normalize";
 
 export function formatQuotePrice(
   price: number,
@@ -54,8 +55,27 @@ export function formatCompactNumber(value: number): string {
   return value.toLocaleString("en-US", { maximumFractionDigits: 2 });
 }
 
-export function formatVolume(value: number | undefined): string {
+export function formatVolume(
+  value: number | undefined,
+  market?: DetectedMarket | MarketQuote["category"]
+): string {
   if (value == null || !Number.isFinite(value)) return "—";
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+
+  if (market === "tw") {
+    if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(2)}M`;
+    if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(2)}K`;
+    return value.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  }
+
+  if (market === "hk") {
+    if (abs >= 1e9) return `${sign}${(abs / 1e9).toFixed(2)}B`;
+    if (abs >= 1e6) return `${sign}${(abs / 1e6).toFixed(2)}M`;
+    if (abs >= 1e3) return `${sign}${(abs / 1e3).toFixed(2)}K`;
+    return value.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  }
+
   return formatCompactNumber(value);
 }
 

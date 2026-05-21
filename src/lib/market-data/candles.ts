@@ -4,6 +4,10 @@ import YahooFinance from "yahoo-finance2";
 import { TIMEFRAME_CONFIG } from "@/lib/chart/timeframes";
 import type { CandleSeriesResponse, ChartTimeframe, OHLCVBar } from "@/lib/chart/types";
 import { sanitizeCandleBars } from "@/lib/chart/sanitize-candles";
+import {
+  detectMarketFromSymbol,
+  normalizeYahooSymbol,
+} from "./symbol-normalize";
 
 let yahooClient: InstanceType<typeof YahooFinance> | null = null;
 
@@ -16,12 +20,14 @@ export async function fetchCandleSeries(
   symbol: string,
   timeframe: ChartTimeframe
 ): Promise<CandleSeriesResponse | null> {
+  const yahooSymbol = normalizeYahooSymbol(symbol);
+  const market = detectMarketFromSymbol(yahooSymbol);
   const config = TIMEFRAME_CONFIG[timeframe];
   const yf = getClient();
   const period1 = new Date(Date.now() - config.days * 24 * 60 * 60 * 1000);
 
   try {
-    const result = await yf.chart(symbol, {
+    const result = await yf.chart(yahooSymbol, {
       period1,
       interval: config.interval,
     });
@@ -49,10 +55,13 @@ export async function fetchCandleSeries(
       });
     }
 
+    const isAsiaEquity = market === "hk" || market === "tw";
     const { bars: clean, rejected } = sanitizeCandleBars(bars, {
-      symbol,
+      symbol: yahooSymbol,
       timeframe,
       logWarnings: true,
+      allowZeroVolumeIntraday: isAsiaEquity,
+      maxBodyMoveFromPrev: isAsiaEquity ? 0.55 : undefined,
     });
 
     if (rejected.length > 0 && clean.length >= 2) {
@@ -69,7 +78,7 @@ export async function fetchCandleSeries(
     const changePercent = first !== 0 ? (change / first) * 100 : 0;
 
     return {
-      symbol,
+      symbol: yahooSymbol,
       timeframe,
       bars: clean,
       change,

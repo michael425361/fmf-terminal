@@ -1,6 +1,7 @@
 import "server-only";
 
 import YahooFinance from "yahoo-finance2";
+import { normalizeYahooSymbol } from "./symbol-normalize";
 import { MARKET_SYMBOLS, SYMBOL_BY_YAHOO } from "./symbols";
 import type {
   ChartPoint,
@@ -136,7 +137,7 @@ export async function fetchYahooQuotes(
   const batches = chunk(definitions, 25);
 
   for (const batch of batches) {
-    const symbols = batch.map((d) => d.symbol);
+    const symbols = batch.map((d) => normalizeYahooSymbol(d.symbol));
 
     try {
       const raw = await yf.quote(symbols);
@@ -144,12 +145,18 @@ export async function fetchYahooQuotes(
         Array.isArray(raw) ? raw : raw ? [raw] : []
       ) as YahooQuoteResult[];
 
-      const rowBySymbol = new Map(
-        rows.filter((r) => r.symbol).map((r) => [r.symbol!, r])
-      );
+      const rowBySymbol = new Map<string, YahooQuoteResult>();
+      for (const r of rows) {
+        if (!r.symbol) continue;
+        const key = r.symbol.toUpperCase();
+        rowBySymbol.set(key, r);
+      }
 
       for (const def of batch) {
-        const row = rowBySymbol.get(def.symbol);
+        const yahooSym = normalizeYahooSymbol(def.symbol);
+        const row =
+          rowBySymbol.get(yahooSym.toUpperCase()) ??
+          rowBySymbol.get(def.symbol.toUpperCase());
         if (!row) {
           errors.push({
             id: def.id,
@@ -185,9 +192,10 @@ export async function fetchYahooChart(
   range = "1d" as const
 ): Promise<MarketChartSeries | null> {
   const yf = getYahooClient();
+  const yahooSymbol = normalizeYahooSymbol(symbol);
 
   try {
-    const result = await yf.chart(symbol, {
+    const result = await yf.chart(yahooSymbol, {
       period1: new Date(Date.now() - 24 * 60 * 60 * 1000),
       interval: "5m",
     });
@@ -213,7 +221,7 @@ export async function fetchYahooChart(
     const last = points[points.length - 1].close;
     const changePercent = first !== 0 ? ((last - first) / first) * 100 : 0;
 
-    return { symbol, points, changePercent };
+    return { symbol: yahooSymbol, points, changePercent };
   } catch {
     return null;
   }
@@ -280,8 +288,9 @@ export async function fetchYahooSparklines(
 
   await Promise.all(
     symbols.map(async (symbol) => {
+      const yahooSymbol = normalizeYahooSymbol(symbol);
       try {
-        const result = await yf.chart(symbol, {
+        const result = await yf.chart(yahooSymbol, {
           period1: new Date(Date.now() - 24 * 60 * 60 * 1000),
           interval: "15m",
         });
@@ -291,6 +300,9 @@ export async function fetchYahooSparklines(
             .filter((c): c is number => c != null && !Number.isNaN(c)) ?? [];
         if (closes.length >= 2) {
           out[symbol] = closes.slice(-24);
+          if (yahooSymbol.toUpperCase() !== symbol.toUpperCase()) {
+            out[yahooSymbol] = out[symbol];
+          }
         }
       } catch {
         // skip failed symbol

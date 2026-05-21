@@ -27,6 +27,8 @@ export interface SanitizeCandleOptions {
   wickExcessThreshold?: number;
   /** Body move below this with large wick => wick anomaly (default 0.07). */
   wickBodyMoveMax?: number;
+  /** Keep zero-volume intraday bars (HK/TW sessions). */
+  allowZeroVolumeIntraday?: boolean;
 }
 
 export interface SanitizeCandleResult {
@@ -142,11 +144,17 @@ function isThinVolumeAnomaly(
 
 function isIncompleteBar(
   bar: OHLCVBar,
-  timeframe?: ChartTimeframe
+  timeframe?: ChartTimeframe,
+  allowZeroVolumeIntraday?: boolean
 ): boolean {
   if (!isValidVolume(bar.volume)) return true;
   // Zero-volume intraday prints are often partial / bad Yahoo rows.
-  if (timeframe && INTRADAY_TIMEFRAMES.has(timeframe) && bar.volume === 0) {
+  if (
+    !allowZeroVolumeIntraday &&
+    timeframe &&
+    INTRADAY_TIMEFRAMES.has(timeframe) &&
+    bar.volume === 0
+  ) {
     return true;
   }
   return false;
@@ -196,7 +204,7 @@ export function sanitizeCandleBars(
       continue;
     }
 
-    if (isIncompleteBar(bar, options.timeframe)) {
+    if (isIncompleteBar(bar, options.timeframe, options.allowZeroVolumeIntraday)) {
       pushReject(rejected, options, {
         reason: "incomplete",
         message: "Incomplete or zero-volume intraday candle",

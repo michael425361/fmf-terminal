@@ -5,6 +5,7 @@ import type {
   CandleSeriesResponse,
   ChartTimeframe,
 } from "@/lib/chart/types";
+import { normalizeYahooSymbol } from "@/lib/market-data/symbol-normalize";
 
 interface UseChartDataOptions {
   symbol: string | null;
@@ -22,6 +23,18 @@ export function useChartData({
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  useEffect(() => {
+    if (!symbol) {
+      setData(null);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+    setData(null);
+    setLoading(true);
+    setError(null);
+  }, [symbol, timeframe]);
+
   const fetchData = useCallback(async () => {
     if (!symbol) {
       setData(null);
@@ -37,7 +50,8 @@ export function useChartData({
     setError(null);
 
     try {
-      const url = `/api/market/candles?symbol=${encodeURIComponent(symbol)}&timeframe=${timeframe}`;
+      const providerSymbol = normalizeYahooSymbol(symbol);
+      const url = `/api/market/candles?symbol=${encodeURIComponent(providerSymbol)}&timeframe=${timeframe}`;
       const res = await fetch(url, {
         signal: controller.signal,
         cache: "no-store",
