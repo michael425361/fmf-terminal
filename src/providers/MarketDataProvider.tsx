@@ -128,6 +128,16 @@ export function MarketDataProvider({ children }: { children: React.ReactNode }) 
 
       if (!isMounted.current) return;
 
+      const contentType = marketRes.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) {
+        setState((prev) => ({
+          ...prev,
+          status: "error",
+          lastError: `Market API returned ${marketRes.status} (expected JSON)`,
+        }));
+        return;
+      }
+
       const snapshot = (await marketRes.json()) as MarketSnapshot;
 
       if (!marketRes.ok && Object.keys(snapshot.quotes ?? {}).length === 0) {

@@ -3,6 +3,67 @@
     "title": "FMF Terminal — 为我的财富而生",
     "description": "FMF 机构级市场终端 — AI 驱动的全球金融情报平台。"
   },
+  "auth": {
+    "title": "登录 FMF Terminal",
+    "signIn": "登录",
+    "signOut": "退出",
+    "close": "关闭",
+    "continueGoogle": "使用 Google 继续",
+    "continueApple": "使用 Apple 继续",
+    "orEmail": "或使用邮箱",
+    "signInTab": "登录",
+    "signUp": "注册",
+    "signInSubmit": "登录",
+    "signUpSubmit": "创建账户",
+    "signUpHint": "如需验证，请查收确认邮件。",
+    "email": "邮箱",
+    "emailPlaceholder": "you@example.com",
+    "password": "密码",
+    "passwordPlaceholder": "至少 6 位",
+    "reasons": {
+      "general": "登录您的 FMF Terminal 账户",
+      "post": "登录后即可发帖",
+      "comment": "登录后即可评论",
+      "favorite": "登录后即可收藏"
+    },
+    "errors": {
+      "notConfigured": "未配置 Supabase，请设置 NEXT_PUBLIC_SUPABASE_URL 与 NEXT_PUBLIC_SUPABASE_ANON_KEY。",
+      "invalidCredentials": "请输入有效邮箱和密码（至少 6 位）。"
+    },
+    "profileMenu": {
+      "openMenu": "打开个人菜单",
+      "loading": "加载资料中…",
+      "loadingUsername": "加载中…",
+      "editProfile": "编辑资料",
+      "signOut": "退出登录",
+      "email": "邮箱"
+    },
+    "profileEdit": {
+      "title": "编辑资料",
+      "close": "关闭",
+      "uploadAvatar": "上传头像",
+      "changeAvatar": "更换头像",
+      "username": "用户名",
+      "usernameHint": "字母、数字、下划线 — 最多 {max} 个字符",
+      "bio": "简介",
+      "bioPlaceholder": "介绍一下你的交易风格…",
+      "save": "保存资料",
+      "saving": "保存中…",
+      "saved": "资料已更新",
+      "errors": {
+        "usernameRequired": "请填写用户名",
+        "usernameTooShort": "至少 {min} 个字符",
+        "usernameTooLong": "最多 {max} 个字符",
+        "usernameInvalid": "仅可使用字母、数字和下划线",
+        "usernameTaken": "该用户名已被占用",
+        "bioTooLong": "简介不能超过 {max} 个字符",
+        "avatarType": "请选择 JPEG、PNG、WebP 或 GIF 图片",
+        "avatarTooLarge": "图片不能超过 8 MB",
+        "avatarProcess": "无法处理该图片",
+        "saveFailed": "保存失败，请重试"
+      }
+    }
+  },
   "brand": {
     "terminal": "TERMINAL",
     "tagline": "为我的财富而生",
@@ -59,9 +120,58 @@
     "portfolio": "持仓",
     "watchlist": "自选",
     "news": "资讯",
+    "community": "社区",
     "journal": "交易日记",
     "calendar": "日历",
     "analytics": "分析"
+  },
+  "community": {
+    "title": "社区",
+    "mockNotice": "帖子仅保存在本地 — 云端同步即将上线",
+    "newPost": "发帖",
+    "newPostSoon": "发帖功能将在后续版本开放",
+    "empty": "该频道暂无帖子。",
+    "tabs": {
+      "us": "美股",
+      "cn": "A股",
+      "daily": "日常"
+    },
+    "createPost": {
+      "title": "发帖",
+      "close": "关闭",
+      "category": "频道",
+      "postTitle": "标题",
+      "postTitlePlaceholder": "说说你的观点或逻辑？",
+      "content": "正文",
+      "contentPlaceholder": "分享看法、交易计划或提问…",
+      "tags": "股票标签",
+      "tagsPlaceholder": "NVDA, TSLA, 600519",
+      "tagsHint": "用逗号或空格分隔，最多 8 个代码",
+      "submit": "发布",
+      "submitting": "发布中…",
+      "published": "发布成功",
+      "categories": {
+        "us": "美股",
+        "cn": "A股",
+        "daily": "日常"
+      },
+      "errors": {
+        "required": "请填写此项"
+      }
+    },
+    "comments": {
+      "viewComments": "查看 {count} 条评论",
+      "viewReplies": "查看 {count} 条回复",
+      "hideReplies": "收起 {count} 条回复",
+      "reply": "回复",
+      "replyPlaceholder": "写下回复… 使用 $NVDA 标注股票",
+      "replySubmit": "发送回复",
+      "placeholder": "发表评论… 可使用 $AAPL、$TSLA、$600519",
+      "tagHint": "输入 $ 加代码可标注股票",
+      "submit": "发送",
+      "cancel": "取消",
+      "empty": "暂无评论，来抢沙发"
+    }
   },
   "news": {
     "title": "资讯",

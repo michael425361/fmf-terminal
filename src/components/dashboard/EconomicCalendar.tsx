@@ -16,12 +16,12 @@ export function EconomicCalendar() {
   const tMock = useTranslations("mock.calendar");
 
   return (
-    <section className="panel flex h-full min-h-[240px] flex-col overflow-hidden">
+    <section className="panel flex min-h-[240px] flex-col">
       <div className="panel-header">
         <span>{t("title")}</span>
         <span>{t("today")}</span>
       </div>
-      <div className="scrollbar-thin flex-1 overflow-auto">
+      <div>
         <ul className="divide-y divide-[var(--border)]/50">
           {economicCalendar.map((ev) => (
             <li

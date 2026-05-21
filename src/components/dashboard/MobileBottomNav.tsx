@@ -8,6 +8,7 @@ import {
   LineChart,
   List,
   Newspaper,
+  Users,
   Wallet,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -19,8 +20,8 @@ const mobileNavItems = [
   { icon: LayoutDashboard, key: "dashboard", href: "/" as const },
   { icon: List, key: "watchlist", href: "/watchlist" as const },
   { icon: Newspaper, key: "news", href: "/news" as const },
+  { icon: Users, key: "community", href: "/community" as const },
   { icon: LineChart, key: "charts", href: "/" as const },
-  { icon: Calendar, key: "calendar", href: null },
 ] as const;
 
 const desktopNavKeys = [
@@ -74,36 +75,20 @@ export function MobileBottomNav() {
         aria-hidden={chartFullscreen}
       >
         {mobileNavItems.map(({ icon: Icon, key, href }) => {
-          const active = href ? isActive(href) : false;
-          const className = cn(
-            "flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] transition",
-            active ? "text-[var(--accent)]" : "text-[var(--muted)]"
-          );
-
-          if (href) {
-            return (
-              <Link
-                key={key}
-                href={href}
-                className={className}
-                aria-label={t(key)}
-              >
-                <Icon className="h-4 w-4" strokeWidth={1.75} />
-                <span>{t(key)}</span>
-              </Link>
-            );
-          }
-
+          const active = isActive(href);
           return (
-            <button
+            <Link
               key={key}
-              type="button"
-              className={className}
+              href={href}
+              className={cn(
+                "flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] transition",
+                active ? "text-[var(--accent)]" : "text-[var(--muted)]"
+              )}
               aria-label={t(key)}
             >
               <Icon className="h-4 w-4" strokeWidth={1.75} />
               <span>{t(key)}</span>
-            </button>
+            </Link>
           );
         })}
       </nav>

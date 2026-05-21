@@ -2,6 +2,7 @@
 
 import { Star } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useAuth } from "@/providers/AuthProvider";
 import { useWatchlist } from "@/providers/WatchlistProvider";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ export function FavoriteButton({
   onToggle,
 }: FavoriteButtonProps) {
   const t = useTranslations("personalWatchlist");
+  const { requireAuth } = useAuth();
   const { isFavorite, toggle } = useWatchlist();
   const favorited = isFavorite(assetId);
 
@@ -31,6 +33,7 @@ export function FavoriteButton({
       type="button"
       onClick={(e) => {
         e.stopPropagation();
+        if (!requireAuth("favorite")) return;
         if (!favorited) onToggle?.(true);
         toggle(assetId);
         if (favorited) onToggle?.(false);

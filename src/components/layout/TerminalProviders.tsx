@@ -5,6 +5,7 @@ import { CommandPalette } from "@/components/command-palette/CommandPalette";
 import { CommandPaletteProvider } from "@/providers/CommandPaletteProvider";
 import { MarketDataProvider } from "@/providers/MarketDataProvider";
 import { MobileLayoutProvider } from "@/providers/MobileLayoutProvider";
+import { AuthProvider } from "@/providers/AuthProvider";
 import { WatchlistProvider } from "@/providers/WatchlistProvider";
 
 export function TerminalProviders({
@@ -16,8 +17,9 @@ export function TerminalProviders({
   commandPalette?: boolean;
 }) {
   return (
-    <MarketDataProvider>
-      <WatchlistProvider>
+    <AuthProvider>
+      <MarketDataProvider>
+        <WatchlistProvider>
         <MobileLayoutProvider>
           <CommandPaletteProvider>
             <TerminalBootLoader>
@@ -26,7 +28,8 @@ export function TerminalProviders({
             </TerminalBootLoader>
           </CommandPaletteProvider>
         </MobileLayoutProvider>
-      </WatchlistProvider>
-    </MarketDataProvider>
+        </WatchlistProvider>
+      </MarketDataProvider>
+    </AuthProvider>
   );
 }

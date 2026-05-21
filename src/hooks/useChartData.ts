@@ -43,8 +43,17 @@ export function useChartData({
         cache: "no-store",
       });
 
+      const contentType = res.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) {
+        throw new Error(
+          `Chart API returned ${res.status} (expected JSON, got HTML)`
+        );
+      }
+
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
         throw new Error(body.error ?? `HTTP ${res.status}`);
       }
 

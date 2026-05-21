@@ -29,7 +29,7 @@ export function MobileWatchlistPage() {
   };
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[var(--background)] lg:hidden">
+    <div className="app-shell lg:hidden">
       <header className="sticky top-0 z-30 shrink-0 border-b border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-md">
         <div className="flex items-center gap-2 px-3 py-3">
           <Link
@@ -48,7 +48,7 @@ export function MobileWatchlistPage() {
         </div>
       </header>
 
-      <main className="scrollbar-thin min-h-0 flex-1 overflow-y-auto pb-[3.75rem]">
+      <main data-app-scroll-root className="app-scroll scrollbar-thin pb-[3.75rem]">
         <PersonalWatchlist variant="page" onSymbolSelect={goToChart} />
       </main>
 

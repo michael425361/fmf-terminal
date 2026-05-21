@@ -20,14 +20,14 @@ export function MacroPanel() {
   const { setActive } = useWatchlist();
 
   return (
-    <section className="panel flex max-h-[280px] flex-col overflow-hidden">
+    <section className="panel flex flex-col">
       <div className="panel-header">
         <span>{tMarket("macroTitle")}</span>
         <span className="font-mono text-[var(--accent)]">
           {MARKET_SYMBOLS.length}
         </span>
       </div>
-      <div className="scrollbar-thin flex-1 overflow-auto">
+      <div>
         {CATEGORY_ORDER.map((category) => (
           <CategoryBlock
             key={category}

@@ -49,7 +49,7 @@ export function PersonalWatchlist({
         <ul
           className={cn(
             "divide-y divide-[var(--border)]/40",
-            isPage ? "" : "scrollbar-thin flex-1 overflow-auto"
+            isPage ? "" : ""
           )}
         >
           {items.map((item, index) => (
@@ -83,7 +83,7 @@ export function PersonalWatchlist({
   }
 
   return (
-    <section className="panel flex min-h-[320px] flex-1 flex-col overflow-hidden">
+    <section className="panel flex min-h-[320px] flex-col">
       <div className="panel-header">
         <span>{t("title")}</span>
         <span className="font-mono text-[var(--accent)]">{items.length}</span>

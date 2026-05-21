@@ -5,6 +5,12 @@ export interface ScrollToTopOptions {
   smooth?: boolean;
 }
 
+/** Primary in-app scroll container (one per page). */
+export function getAppScrollRoot(): HTMLElement | null {
+  if (typeof document === "undefined") return null;
+  return document.querySelector<HTMLElement>("[data-app-scroll-root]");
+}
+
 /** Request scroll-to-top on the next chart/dashboard paint (e.g. after /watchlist → /). */
 export function markScrollChartTop(): void {
   if (typeof sessionStorage === "undefined") return;
@@ -20,7 +26,7 @@ export function consumeScrollChartTop(): boolean {
   return false;
 }
 
-/** Scroll window and in-app scroll roots to top (mobile-first). */
+/** Scroll the app scroll root to top (never double-scroll body + main). */
 export function scrollToAppTop(options: ScrollToTopOptions = {}): void {
   if (typeof window === "undefined") return;
 
@@ -28,14 +34,12 @@ export function scrollToAppTop(options: ScrollToTopOptions = {}): void {
   const isMobile = window.matchMedia(`(max-width: ${MOBILE_MAX_WIDTH}px)`).matches;
 
   const run = () => {
-    window.scrollTo({ top: 0, left: 0, behavior });
-
-    document.documentElement.scrollTo({ top: 0, left: 0, behavior });
-    document.body.scrollTo({ top: 0, left: 0, behavior });
-
-    document.querySelectorAll<HTMLElement>("[data-app-scroll-root]").forEach((el) => {
-      el.scrollTo({ top: 0, left: 0, behavior });
-    });
+    const root = getAppScrollRoot();
+    if (root) {
+      root.scrollTo({ top: 0, left: 0, behavior });
+    } else {
+      window.scrollTo({ top: 0, left: 0, behavior });
+    }
 
     if (isMobile) {
       document
@@ -47,4 +51,19 @@ export function scrollToAppTop(options: ScrollToTopOptions = {}): void {
   requestAnimationFrame(() => {
     requestAnimationFrame(run);
   });
+}
+
+/** Lock document scroll while overlays (fullscreen chart, modals) are open. */
+export function lockDocumentScroll(): () => void {
+  if (typeof document === "undefined") return () => {};
+  const html = document.documentElement;
+  const body = document.body;
+  const prevHtml = html.style.overflow;
+  const prevBody = body.style.overflow;
+  html.style.overflow = "hidden";
+  body.style.overflow = "hidden";
+  return () => {
+    html.style.overflow = prevHtml;
+    body.style.overflow = prevBody;
+  };
 }

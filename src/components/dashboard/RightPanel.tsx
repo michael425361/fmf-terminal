@@ -39,7 +39,7 @@ export function RightPanel() {
         ))}
       </div>
 
-      <div className="min-h-[280px] flex-1 lg:min-h-[320px]">
+      <div className="min-h-[280px] lg:min-h-0">
         {tab === "mine" ? <PersonalWatchlist variant="panel" /> : <MacroPanel />}
       </div>
 

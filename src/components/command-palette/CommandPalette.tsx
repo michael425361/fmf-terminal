@@ -10,6 +10,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { X } from "lucide-react";
 import { useCommandPalette } from "@/providers/CommandPaletteProvider";
+import { useAuth } from "@/providers/AuthProvider";
 import { useWatchlist } from "@/providers/WatchlistProvider";
 import { useMarketData } from "@/providers/MarketDataProvider";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -49,6 +50,7 @@ export function CommandPalette() {
     isFavorite,
     items,
   } = useWatchlist();
+  const { requireAuth } = useAuth();
   const { getQuote } = useMarketData();
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -170,7 +172,10 @@ export function CommandPalette() {
       registerCatalogEntry(entry);
 
       if (parsed.type === "watchlist-add") {
-        if (!isFavorite(entry.id)) toggle(entry.id);
+        if (!isFavorite(entry.id)) {
+          if (!requireAuth("favorite")) return false;
+          toggle(entry.id);
+        }
       } else if (parsed.type === "watchlist-remove") {
         if (isFavorite(entry.id)) toggle(entry.id);
       } else {
@@ -183,7 +188,7 @@ export function CommandPalette() {
       closePalette();
       return true;
     },
-    [parsed.type, isFavorite, toggle, setActive, closePalette]
+    [parsed.type, isFavorite, toggle, setActive, closePalette, requireAuth]
   );
 
   const activateResult = useCallback(
@@ -194,7 +199,10 @@ export function CommandPalette() {
       registerCatalogEntry(item.entry);
 
       if (parsed.type === "watchlist-add") {
-        if (!isFavorite(item.entry.id)) toggle(item.entry.id);
+        if (!isFavorite(item.entry.id)) {
+          if (!requireAuth("favorite")) return;
+          toggle(item.entry.id);
+        }
       } else if (parsed.type === "watchlist-remove") {
         if (isFavorite(item.entry.id)) toggle(item.entry.id);
       } else {
@@ -206,7 +214,7 @@ export function CommandPalette() {
       setRecents(loadRecentStore());
       closePalette();
     },
-    [flatResults, parsed.type, isFavorite, toggle, setActive, closePalette]
+    [flatResults, parsed.type, isFavorite, toggle, setActive, closePalette, requireAuth]
   );
 
   const handleInputKeyDown = useCallback(
@@ -259,11 +267,12 @@ export function CommandPalette() {
   const handleToggleFavorite = useCallback(
     (id: string, e: React.MouseEvent) => {
       e.stopPropagation();
+      if (!isFavorite(id) && !requireAuth("favorite")) return;
       const item = flatResults.find((r) => r.entry.id === id);
       if (item) registerCatalogEntry(item.entry);
       toggle(id);
     },
-    [flatResults, toggle]
+    [flatResults, toggle, isFavorite, requireAuth]
   );
 
   const handleTogglePin = useCallback(

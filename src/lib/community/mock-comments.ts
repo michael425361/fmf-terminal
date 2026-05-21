@@ -1,0 +1,116 @@
+import type { CommentsByPostId } from "./types";
+
+const ago = (m: number) => new Date(Date.now() - m * 60_000).toISOString();
+
+/** Seed discussion threads for mock posts */
+export function getInitialMockComments(): CommentsByPostId {
+  return {
+    "us-1": [
+      {
+        id: "c-us1-1",
+        postId: "us-1",
+        parentId: null,
+        username: "SemiBull",
+        avatarInitials: "SB",
+        avatarHue: 200,
+        publishedAt: ago(45),
+        body: "Still long $NVDA but trimming into $950. $AMD sympathy trade looks crowded.",
+        likes: 24,
+      },
+      {
+        id: "c-us1-2",
+        postId: "us-1",
+        parentId: "c-us1-1",
+        username: "QuantLane",
+        avatarInitials: "QL",
+        avatarHue: 280,
+        publishedAt: ago(32),
+        body: "Agree on crowdedness. Watching $SOXX relative strength vs $QQQ.",
+        likes: 11,
+      },
+      {
+        id: "c-us1-3",
+        postId: "us-1",
+        parentId: null,
+        username: "OptionsDesk",
+        avatarInitials: "OD",
+        avatarHue: 15,
+        publishedAt: ago(18),
+        body: "Capex cycle narrative still intact — hyperscalers guiding up.",
+        likes: 8,
+      },
+    ],
+    "us-2": [
+      {
+        id: "c-us2-1",
+        postId: "us-2",
+        parentId: null,
+        username: "RatesWatch",
+        avatarInitials: "RW",
+        avatarHue: 120,
+        publishedAt: ago(60),
+        body: "$TLT bounce if core CPI cools — watching 4.25% as magnet.",
+        likes: 19,
+      },
+    ],
+    "cn-1": [
+      {
+        id: "c-cn1-1",
+        postId: "cn-1",
+        parentId: null,
+        username: "北向小哥",
+        avatarInitials: "北",
+        avatarHue: 38,
+        publishedAt: ago(25),
+        body: "北向今天净流入不错，$300750 带队，白酒跟着企稳。",
+        likes: 56,
+      },
+      {
+        id: "c-cn1-2",
+        postId: "cn-1",
+        parentId: "c-cn1-1",
+        username: "价值研习",
+        avatarInitials: "值",
+        avatarHue: 55,
+        publishedAt: ago(12),
+        body: "$600519 估值仍不便宜，但情绪底可能在了。",
+        likes: 31,
+      },
+      {
+        id: "c-cn1-3",
+        postId: "cn-1",
+        parentId: null,
+        username: "短线客老K",
+        avatarInitials: "K",
+        avatarHue: 200,
+        publishedAt: ago(8),
+        body: "创业板弹性更好，注意 $399006 突破能否放量。",
+        likes: 14,
+      },
+    ],
+    "daily-1": [
+      {
+        id: "c-d1-1",
+        postId: "daily-1",
+        parentId: null,
+        username: "RiskFirst",
+        avatarInitials: "RF",
+        avatarHue: 280,
+        publishedAt: ago(40),
+        body: "My checklist: sleep, levels, max loss, no revenge. $SPY doesn't care about your feelings.",
+        likes: 42,
+      },
+      {
+        id: "c-d1-2",
+        postId: "daily-1",
+        parentId: "c-d1-1",
+        username: "FMF_Trader",
+        avatarInitials: "ME",
+        avatarHue: 42,
+        publishedAt: ago(28),
+        body: "Journal template helps — I log $TSLA setups separately from index trades.",
+        likes: 18,
+      },
+    ],
+  };
+}

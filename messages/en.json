@@ -3,6 +3,67 @@
     "title": "FMF Terminal — For My Finance",
     "description": "AI-powered institutional market terminal for global finance — For My Finance."
   },
+  "auth": {
+    "title": "Sign in to FMF Terminal",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "close": "Close",
+    "continueGoogle": "Continue with Google",
+    "continueApple": "Continue with Apple",
+    "orEmail": "or email",
+    "signInTab": "Sign in",
+    "signUp": "Sign up",
+    "signInSubmit": "Sign in",
+    "signUpSubmit": "Create account",
+    "signUpHint": "Check your email to confirm your account if required.",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "At least 6 characters",
+    "reasons": {
+      "general": "Access your FMF Terminal account",
+      "post": "Sign in to create a post",
+      "comment": "Sign in to comment",
+      "favorite": "Sign in to add favorites"
+    },
+    "errors": {
+      "notConfigured": "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+      "invalidCredentials": "Enter a valid email and password (min 6 characters)."
+    },
+    "profileMenu": {
+      "openMenu": "Open profile menu",
+      "loading": "Loading profile…",
+      "loadingUsername": "Loading…",
+      "editProfile": "Edit profile",
+      "signOut": "Sign out",
+      "email": "Email"
+    },
+    "profileEdit": {
+      "title": "Edit profile",
+      "close": "Close",
+      "uploadAvatar": "Upload photo",
+      "changeAvatar": "Change photo",
+      "username": "Username",
+      "usernameHint": "Letters, numbers, underscores — max {max} chars",
+      "bio": "Bio",
+      "bioPlaceholder": "Tell the community about your trading style…",
+      "save": "Save profile",
+      "saving": "Saving…",
+      "saved": "Profile updated",
+      "errors": {
+        "usernameRequired": "Username is required",
+        "usernameTooShort": "At least {min} characters",
+        "usernameTooLong": "Maximum {max} characters",
+        "usernameInvalid": "Use only letters, numbers, and underscores",
+        "usernameTaken": "That username is already taken",
+        "bioTooLong": "Bio must be {max} characters or less",
+        "avatarType": "Please choose a JPEG, PNG, WebP, or GIF image",
+        "avatarTooLarge": "Image must be under 8 MB",
+        "avatarProcess": "Could not process that image",
+        "saveFailed": "Could not save profile. Try again."
+      }
+    }
+  },
   "brand": {
     "terminal": "TERMINAL",
     "tagline": "For My Finance",
@@ -59,9 +120,58 @@
     "portfolio": "Portfolio",
     "watchlist": "Watchlist",
     "news": "News",
+    "community": "Community",
     "journal": "Journal",
     "calendar": "Calendar",
     "analytics": "Analytics"
+  },
+  "community": {
+    "title": "Community",
+    "mockNotice": "Local posts only — sync coming soon",
+    "newPost": "New Post",
+    "newPostSoon": "Posting will be available in a future update",
+    "empty": "No posts in this channel yet.",
+    "tabs": {
+      "us": "US Stocks",
+      "cn": "A-Shares",
+      "daily": "Daily"
+    },
+    "createPost": {
+      "title": "Create Post",
+      "close": "Close",
+      "category": "Channel",
+      "postTitle": "Title",
+      "postTitlePlaceholder": "What's your thesis?",
+      "content": "Content",
+      "contentPlaceholder": "Share your view, setup, or question…",
+      "tags": "Stock tags",
+      "tagsPlaceholder": "NVDA, TSLA, 600519",
+      "tagsHint": "Separate with commas or spaces. Up to 8 symbols.",
+      "submit": "Publish",
+      "submitting": "Publishing…",
+      "published": "Post published",
+      "categories": {
+        "us": "US",
+        "cn": "A-Share",
+        "daily": "Daily"
+      },
+      "errors": {
+        "required": "This field is required"
+      }
+    },
+    "comments": {
+      "viewComments": "View {count} comments",
+      "viewReplies": "View {count} replies",
+      "hideReplies": "Hide {count} replies",
+      "reply": "Reply",
+      "replyPlaceholder": "Write a reply… Use $NVDA for tickers",
+      "replySubmit": "Reply",
+      "placeholder": "Add a comment… Use $AAPL, $TSLA, $600519",
+      "tagHint": "Type $ before tickers to tag symbols",
+      "submit": "Comment",
+      "cancel": "Cancel",
+      "empty": "No comments yet — start the discussion"
+    }
   },
   "news": {
     "title": "News",

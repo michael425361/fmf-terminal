@@ -22,7 +22,7 @@ export function NewsPage() {
   const feedErrors = data?.errors ?? [];
 
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--background)]">
+    <div className="app-shell">
       <header className="sticky top-0 z-30 shrink-0 border-b border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-3xl items-center gap-2 px-4 py-3 lg:px-6">
           <Link
@@ -74,7 +74,7 @@ export function NewsPage() {
 
       <main
         data-app-scroll-root
-        className="scrollbar-thin min-h-0 flex-1 overflow-y-auto pb-[4.5rem] lg:pb-8"
+        className="app-scroll scrollbar-thin pb-[4.5rem] lg:pb-8"
       >
         <div className="mx-auto max-w-3xl px-4 py-4 lg:px-6 lg:py-6">
           {error && (

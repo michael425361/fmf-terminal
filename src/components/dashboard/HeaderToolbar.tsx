@@ -2,6 +2,7 @@
 
 import { Bell, Search, Settings } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { AuthButton } from "@/components/auth/AuthButton";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { portfolioSnapshot } from "@/lib/mock-data";
 import { cn, formatPrice } from "@/lib/utils";
@@ -16,7 +17,7 @@ export function HeaderToolbar() {
   const up = dayPnl >= 0;
 
   return (
-    <header className="flex h-12 shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-3 sm:px-4">
+    <header className="relative z-50 flex h-12 shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-3 sm:px-4">
       <div className="flex items-center gap-3 sm:gap-6">
         <BrandMark className="hidden sm:flex" />
         <BrandMark compact className="sm:hidden" />
@@ -57,9 +58,7 @@ export function HeaderToolbar() {
         <LanguageSwitcher />
         <IconButton icon={Bell} />
         <IconButton icon={Settings} />
-        <div className="ml-1 hidden h-7 w-7 items-center justify-center rounded-full bg-[var(--accent-dim)] text-[10px] font-bold text-[var(--accent)] sm:flex">
-          M
-        </div>
+        <AuthButton className="relative z-[60] ml-1 shrink-0" />
       </div>
     </header>
   );
