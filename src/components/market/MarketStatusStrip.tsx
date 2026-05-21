@@ -11,7 +11,7 @@ export function MarketStatusStrip() {
 
   if (status === "loading" || status === "idle") {
     return (
-      <div className="flex items-center justify-between border-b border-[var(--border)]/50 px-3 py-1">
+      <div className="hidden items-center justify-between border-b border-[var(--border)]/50 px-3 py-1 lg:flex">
         <span className="text-[10px] text-[var(--muted)]">{t("loading")}</span>
         <RefreshCw className="h-3 w-3 animate-spin text-[var(--muted)]" />
       </div>
@@ -25,7 +25,7 @@ export function MarketStatusStrip() {
   const hasErrors = (snapshot?.errors.length ?? 0) > 0;
 
   return (
-    <div className="flex items-center justify-between border-b border-[var(--border)]/50 px-3 py-1">
+    <div className="hidden items-center justify-between border-b border-[var(--border)]/50 px-3 py-1 lg:flex">
       <span className="text-[10px] text-[var(--muted)]">
         {t("lastUpdate")}:{" "}
         <span className="font-mono text-[var(--foreground)]">{timeLabel}</span>

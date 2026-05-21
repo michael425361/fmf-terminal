@@ -13,6 +13,10 @@ interface MobileLayoutContextValue {
   openWatchlist: () => void;
   closeWatchlist: () => void;
   toggleWatchlist: () => void;
+  chartFullscreen: boolean;
+  openChartFullscreen: () => void;
+  closeChartFullscreen: () => void;
+  toggleChartFullscreen: () => void;
 }
 
 const MobileLayoutContext = createContext<MobileLayoutContextValue | null>(
@@ -25,11 +29,28 @@ export function MobileLayoutProvider({
   children: React.ReactNode;
 }) {
   const [watchlistOpen, setWatchlistOpen] = useState(false);
+  const [chartFullscreen, setChartFullscreen] = useState(false);
 
   const openWatchlist = useCallback(() => setWatchlistOpen(true), []);
   const closeWatchlist = useCallback(() => setWatchlistOpen(false), []);
   const toggleWatchlist = useCallback(
     () => setWatchlistOpen((o) => !o),
+    []
+  );
+
+  const openChartFullscreen = useCallback(() => {
+    setWatchlistOpen(false);
+    setChartFullscreen(true);
+  }, []);
+
+  const closeChartFullscreen = useCallback(() => setChartFullscreen(false), []);
+
+  const toggleChartFullscreen = useCallback(
+    () =>
+      setChartFullscreen((on) => {
+        if (!on) setWatchlistOpen(false);
+        return !on;
+      }),
     []
   );
 
@@ -39,8 +60,21 @@ export function MobileLayoutProvider({
       openWatchlist,
       closeWatchlist,
       toggleWatchlist,
+      chartFullscreen,
+      openChartFullscreen,
+      closeChartFullscreen,
+      toggleChartFullscreen,
     }),
-    [watchlistOpen, openWatchlist, closeWatchlist, toggleWatchlist]
+    [
+      watchlistOpen,
+      openWatchlist,
+      closeWatchlist,
+      toggleWatchlist,
+      chartFullscreen,
+      openChartFullscreen,
+      closeChartFullscreen,
+      toggleChartFullscreen,
+    ]
   );
 
   return (

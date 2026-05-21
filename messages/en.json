@@ -131,6 +131,8 @@
     "ind": {
       "volume": "Vol"
     },
+    "enterFullscreen": "Fullscreen chart",
+    "exitFullscreen": "Exit fullscreen",
     "status": {
       "open": "Open",
       "closed": "Closed",

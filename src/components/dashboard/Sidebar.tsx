@@ -32,7 +32,8 @@ const mobileNavKeys = [
 
 export function Sidebar() {
   const t = useTranslations("nav");
-  const { watchlistOpen, openWatchlist, closeWatchlist } = useMobileLayout();
+  const { watchlistOpen, openWatchlist, closeWatchlist, chartFullscreen } =
+    useMobileLayout();
 
   return (
     <>
@@ -56,7 +57,14 @@ export function Sidebar() {
         </nav>
       </aside>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex border-t border-[var(--border)] bg-[var(--surface)] pb-[env(safe-area-inset-bottom,0px)] lg:hidden">
+      <nav
+        className={cn(
+          "fixed bottom-0 left-0 right-0 z-50 flex border-t border-[var(--border)] bg-[var(--surface)] pb-[env(safe-area-inset-bottom,0px)] transition-all duration-300 lg:hidden",
+          chartFullscreen &&
+            "pointer-events-none translate-y-full opacity-0"
+        )}
+        aria-hidden={chartFullscreen}
+      >
         {mobileNavKeys.map((item) => {
           const { icon: Icon, key, active } = item;
           const opensWatchlist =

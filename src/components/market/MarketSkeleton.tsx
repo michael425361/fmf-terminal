@@ -6,7 +6,7 @@ export function TickerSkeleton({ count = 8 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="flex min-w-[130px] shrink-0 flex-col justify-center gap-1.5 border-r border-[var(--border)] px-3 py-2 sm:min-w-[155px]"
+          className="flex min-w-[84px] shrink-0 flex-col justify-center gap-1 border-r border-[var(--border)] px-2 py-1.5 lg:min-w-[118px] lg:gap-1.5 lg:px-3 lg:py-2"
         >
           <div className="skeleton h-3 w-12" />
           <div className="skeleton h-4 w-20" />

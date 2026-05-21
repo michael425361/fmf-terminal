@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
+import { useMobileLayout } from "@/providers/MobileLayoutProvider";
 import { useWatchlist } from "@/providers/WatchlistProvider";
 import { useMarketData } from "@/providers/MarketDataProvider";
 import { useChartData } from "@/hooks/useChartData";
@@ -34,6 +35,7 @@ export function TradingChart({ className }: { className?: string }) {
   const t = useTranslations("tradingChart");
   const { activeItem } = useWatchlist();
   const { getQuote } = useMarketData();
+  const { chartFullscreen } = useMobileLayout();
 
   const [chartType, setChartType] = useState<ChartType>("candlestick");
   const [timeframe, setTimeframe] = useState<ChartTimeframe>("1D");
@@ -50,7 +52,9 @@ export function TradingChart({ className }: { className?: string }) {
   return (
     <section
       className={cn(
-        "panel flex min-h-0 flex-1 flex-col overflow-hidden lg:min-h-[420px]",
+        "panel flex min-h-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-out lg:min-h-[420px]",
+        chartFullscreen &&
+          "chart-fullscreen-panel fixed inset-0 z-[75] m-0 min-h-0 flex-1 rounded-none border-0 shadow-none",
         className
       )}
     >
@@ -69,7 +73,12 @@ export function TradingChart({ className }: { className?: string }) {
         onIndicatorsChange={setIndicators}
       />
 
-      <div className="relative min-h-[220px] flex-1 sm:min-h-[280px] lg:min-h-[300px]">
+      <div
+        className={cn(
+          "relative min-h-[220px] flex-1 sm:min-h-[280px] lg:min-h-[300px]",
+          chartFullscreen && "min-h-0"
+        )}
+      >
         {loading && bars.length === 0 ? (
           <ChartSkeleton />
         ) : error ? (

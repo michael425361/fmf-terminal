@@ -131,6 +131,8 @@
     "ind": {
       "volume": "成交量"
     },
+    "enterFullscreen": "全屏图表",
+    "exitFullscreen": "退出全屏",
     "status": {
       "open": "交易中",
       "closed": "已收盘",

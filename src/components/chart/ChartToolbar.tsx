@@ -3,6 +3,7 @@
 import { BarChart2, LineChart, CandlestickChart, Volume2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ChartType, ChartIndicatorState } from "@/lib/chart/types";
+import { ChartFullscreenButton } from "./ChartFullscreenButton";
 import { TimeframeSelector } from "./TimeframeSelector";
 import type { ChartTimeframe } from "@/lib/chart/types";
 import { cn } from "@/lib/utils";
@@ -32,7 +33,10 @@ export function ChartToolbar({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border)]/60 bg-[var(--surface-card)] px-2 py-1.5">
-      <TimeframeSelector value={timeframe} onChange={onTimeframeChange} />
+      <div className="flex items-center gap-1.5">
+        <TimeframeSelector value={timeframe} onChange={onTimeframeChange} />
+        <ChartFullscreenButton />
+      </div>
 
       <div className="flex flex-wrap items-center gap-1">
         <TypeButton

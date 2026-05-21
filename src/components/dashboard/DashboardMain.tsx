@@ -10,13 +10,14 @@ import { useMobileLayout } from "@/providers/MobileLayoutProvider";
 import { cn } from "@/lib/utils";
 
 export function DashboardMain() {
-  const { watchlistOpen } = useMobileLayout();
+  const { watchlistOpen, chartFullscreen } = useMobileLayout();
 
   return (
     <>
       <div
         className={cn(
           "flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-2 pb-[6.75rem] lg:grid lg:grid-cols-12 lg:gap-3 lg:overflow-auto lg:p-3 lg:pb-3",
+          chartFullscreen && "p-0 pb-0",
           watchlistOpen && "lg:overflow-auto"
         )}
       >
@@ -33,8 +34,12 @@ export function DashboardMain() {
         </div>
       </div>
 
-      <WatchlistPeekBar />
-      <WatchlistBottomSheet />
+      {!chartFullscreen && (
+        <>
+          <WatchlistPeekBar />
+          <WatchlistBottomSheet />
+        </>
+      )}
     </>
   );
 }

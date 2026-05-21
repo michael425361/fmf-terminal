@@ -12,11 +12,12 @@ import { cn } from "@/lib/utils";
 /** TradingView-style peek bar above fixed bottom nav — opens watchlist sheet */
 export function WatchlistPeekBar() {
   const t = useTranslations("personalWatchlist");
-  const { watchlistOpen, openWatchlist } = useMobileLayout();
+  const { watchlistOpen, openWatchlist, chartFullscreen } = useMobileLayout();
+
   const { activeItem, items } = useWatchlist();
   const { getQuote } = useMarketData();
 
-  if (watchlistOpen) return null;
+  if (watchlistOpen || chartFullscreen) return null;
 
   const quote = activeItem ? getQuote(activeItem.id) : undefined;
 

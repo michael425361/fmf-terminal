@@ -62,7 +62,7 @@ const TickerChipInner = forwardRef<HTMLButtonElement, TickerChipProps>(
     if (loading || !quote || !asset) {
       return (
         <div
-          className="flex min-w-[118px] shrink-0 flex-col justify-center gap-1 border-r border-[var(--border)] px-3 py-2"
+          className="flex min-w-[84px] shrink-0 flex-col justify-center gap-0.5 border-r border-[var(--border)] px-2 py-1.5 lg:min-w-[118px] lg:gap-1 lg:px-3 lg:py-2"
           aria-hidden
         >
           <div className="skeleton h-3 w-10" />
@@ -89,7 +89,7 @@ const TickerChipInner = forwardRef<HTMLButtonElement, TickerChipProps>(
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         className={cn(
-          "ticker-chip group relative flex min-w-[118px] shrink-0 flex-col justify-center border-r border-[var(--border)] px-3 py-2.5 text-left transition-all duration-200",
+          "ticker-chip group relative flex min-w-[84px] shrink-0 flex-col justify-center border-r border-[var(--border)] px-2 py-1.5 text-left transition-all duration-200 lg:min-w-[118px] lg:px-3 lg:py-2.5",
           "hover:bg-[var(--surface-card)] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-[-1px] focus-visible:outline-[var(--accent)]",
           isActive && "ticker-chip-active bg-[var(--surface-card)]",
           flashClass
@@ -106,13 +106,18 @@ const TickerChipInner = forwardRef<HTMLButtonElement, TickerChipProps>(
           <div className="flex min-w-0 items-baseline gap-1.5">
             <span
               className={cn(
-                "font-mono text-xs font-semibold tracking-wide transition-colors",
+                "font-mono text-[10px] font-semibold tracking-wide transition-colors lg:text-xs",
                 isActive ? "text-[var(--accent)]" : "text-[var(--foreground)]"
               )}
             >
               {quote.shortLabel}
             </span>
-            <span className={cn("font-mono text-[10px] tabular-nums", pctClass)}>
+            <span
+              className={cn(
+                "font-mono text-[9px] tabular-nums lg:text-[10px]",
+                pctClass
+              )}
+            >
               {formatSignedPercent(quote.changePercent)}
             </span>
           </div>
@@ -127,7 +132,12 @@ const TickerChipInner = forwardRef<HTMLButtonElement, TickerChipProps>(
           />
         </div>
 
-        <QuoteValue quote={quote} previous={previous} showChange={false} />
+        <QuoteValue
+          quote={quote}
+          previous={previous}
+          showChange={false}
+          className="[&>div:first-child]:text-[11px] [&>div:first-child]:leading-tight lg:[&>div:first-child]:text-sm"
+        />
 
         <TickerTooltip asset={asset} quote={quote} visible={hovered} />
       </button>

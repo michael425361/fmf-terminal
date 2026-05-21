@@ -314,3 +314,25 @@ body {
 .watchlist-peek-bar:active {
   transform: scale(0.995);
 }
+
+/* Mobile chart fullscreen */
+.chart-fullscreen-panel {
+  animation: chart-fs-enter 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@keyframes chart-fs-enter {
+  from {
+    opacity: 0.92;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.chart-fullscreen-active {
+  background: var(--background);
+}
