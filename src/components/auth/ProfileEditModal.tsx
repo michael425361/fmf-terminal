@@ -187,7 +187,7 @@ export function ProfileEditModal({
       aria-modal="true"
       aria-labelledby="profile-edit-title"
     >
-      <div className="profile-edit-panel flex min-h-0 flex-1 flex-col bg-[var(--background)] pt-[env(safe-area-inset-top,0px)] lg:mx-auto lg:my-auto lg:max-h-[92vh] lg:w-full lg:max-w-md lg:rounded-lg lg:border lg:border-[var(--border)] lg:pt-0 lg:shadow-2xl">
+      <div className="profile-edit-panel flex min-h-0 flex-1 flex-col bg-[var(--background)] pt-[env(safe-area-inset-top,0px)] lg:mx-auto lg:my-auto lg:max-h-[92dvh] lg:w-full lg:max-w-md lg:rounded-lg lg:border lg:border-[var(--border)] lg:pt-0 lg:shadow-2xl">
         <header className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--surface)]/95 px-4 py-3 backdrop-blur-md">
           <button
             type="button"

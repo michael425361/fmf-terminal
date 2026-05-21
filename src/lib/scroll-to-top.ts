@@ -1,14 +1,27 @@
 const MOBILE_MAX_WIDTH = 1023;
 const SCROLL_CHART_TOP_KEY = "fmf-scroll-chart-top";
 
+let scrollLockCount = 0;
+const scrollLockTops = new Map<HTMLElement, number>();
+
 export interface ScrollToTopOptions {
   smooth?: boolean;
+  /** Avoid on mobile — scrollIntoView can trigger iOS viewport zoom glitches. */
+  scrollChartIntoView?: boolean;
 }
 
 /** Primary in-app scroll container (one per page). */
 export function getAppScrollRoot(): HTMLElement | null {
   if (typeof document === "undefined") return null;
   return document.querySelector<HTMLElement>("[data-app-scroll-root]");
+}
+
+/** All in-app scroll roots (at most one visible per route). */
+function getAppScrollRoots(): HTMLElement[] {
+  if (typeof document === "undefined") return [];
+  return Array.from(
+    document.querySelectorAll<HTMLElement>("[data-app-scroll-root]")
+  );
 }
 
 /** Request scroll-to-top on the next chart/dashboard paint (e.g. after /watchlist → /). */
@@ -34,14 +47,16 @@ export function scrollToAppTop(options: ScrollToTopOptions = {}): void {
   const isMobile = window.matchMedia(`(max-width: ${MOBILE_MAX_WIDTH}px)`).matches;
 
   const run = () => {
-    const root = getAppScrollRoot();
-    if (root) {
-      root.scrollTo({ top: 0, left: 0, behavior });
+    const roots = getAppScrollRoots();
+    if (roots.length > 0) {
+      for (const root of roots) {
+        root.scrollTo({ top: 0, left: 0, behavior });
+      }
     } else {
       window.scrollTo({ top: 0, left: 0, behavior });
     }
 
-    if (isMobile) {
+    if (options.scrollChartIntoView && isMobile) {
       document
         .querySelector<HTMLElement>("[data-chart-panel]")
         ?.scrollIntoView({ behavior, block: "start" });
@@ -53,17 +68,53 @@ export function scrollToAppTop(options: ScrollToTopOptions = {}): void {
   });
 }
 
-/** Lock document scroll while overlays (fullscreen chart, modals) are open. */
+function blurActiveElement(): void {
+  const el = document.activeElement;
+  if (el instanceof HTMLElement && el !== document.body) {
+    el.blur();
+  }
+}
+
+/**
+ * Lock in-app scroll while overlays (fullscreen chart, modals) are open.
+ * Reference-counted; restores each scroll root position on release.
+ */
 export function lockDocumentScroll(): () => void {
   if (typeof document === "undefined") return () => {};
+
   const html = document.documentElement;
   const body = document.body;
-  const prevHtml = html.style.overflow;
-  const prevBody = body.style.overflow;
-  html.style.overflow = "hidden";
-  body.style.overflow = "hidden";
+
+  if (scrollLockCount === 0) {
+    blurActiveElement();
+    html.classList.add("viewport-locked");
+
+    for (const root of getAppScrollRoots()) {
+      scrollLockTops.set(root, root.scrollTop);
+      root.classList.add("app-scroll-lock");
+    }
+  }
+
+  scrollLockCount += 1;
+
   return () => {
-    html.style.overflow = prevHtml;
-    body.style.overflow = prevBody;
+    if (scrollLockCount <= 0) return;
+    scrollLockCount -= 1;
+
+    if (scrollLockCount === 0) {
+      html.classList.remove("viewport-locked");
+
+      for (const root of getAppScrollRoots()) {
+        const top = scrollLockTops.get(root) ?? 0;
+        root.classList.remove("app-scroll-lock");
+        root.scrollTop = top;
+        scrollLockTops.delete(root);
+      }
+
+      scrollLockTops.clear();
+      blurActiveElement();
+      body.style.removeProperty("overflow");
+      html.style.removeProperty("overflow");
+    }
   };
 }

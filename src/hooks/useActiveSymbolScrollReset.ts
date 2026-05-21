@@ -28,14 +28,14 @@ export function useActiveSymbolScrollReset() {
     }
 
     if (consumeScrollChartTop()) {
-      scrollToAppTop({ smooth: true });
+      scrollToAppTop({ smooth: true, scrollChartIntoView: false });
       prevActiveIdRef.current = activeId;
       return;
     }
 
     const prev = prevActiveIdRef.current;
     if (prev !== null && activeId !== null && prev !== activeId) {
-      scrollToAppTop({ smooth: true });
+      scrollToAppTop({ smooth: true, scrollChartIntoView: false });
     }
 
     prevActiveIdRef.current = activeId;

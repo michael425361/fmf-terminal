@@ -7,6 +7,7 @@ import { MarketDataProvider } from "@/providers/MarketDataProvider";
 import { MobileLayoutProvider } from "@/providers/MobileLayoutProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { WatchlistProvider } from "@/providers/WatchlistProvider";
+import { ViewportStabilizer } from "@/components/layout/ViewportStabilizer";
 
 export function TerminalProviders({
   children,
@@ -21,6 +22,7 @@ export function TerminalProviders({
       <MarketDataProvider>
         <WatchlistProvider>
         <MobileLayoutProvider>
+          <ViewportStabilizer />
           <CommandPaletteProvider>
             <TerminalBootLoader>
               {children}

@@ -95,7 +95,7 @@ export function CreatePostModal({
       aria-modal="true"
       aria-labelledby="create-post-title"
     >
-      <div className="create-post-panel flex min-h-0 flex-1 flex-col bg-[var(--background)] lg:mx-auto lg:my-auto lg:max-h-[90vh] lg:w-full lg:max-w-lg lg:rounded-lg lg:border lg:border-[var(--border)] lg:shadow-2xl">
+      <div className="create-post-panel flex min-h-0 flex-1 flex-col bg-[var(--background)] lg:mx-auto lg:my-auto lg:max-h-[90dvh] lg:w-full lg:max-w-lg lg:rounded-lg lg:border lg:border-[var(--border)] lg:shadow-2xl">
         <header className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--surface)]/95 px-4 py-3 backdrop-blur-md">
           <button
             type="button"

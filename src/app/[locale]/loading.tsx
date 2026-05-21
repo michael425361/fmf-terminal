@@ -3,7 +3,7 @@ import { SITE } from "@/lib/brand/site";
 
 export default function Loading() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--background)]">
+    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-[var(--background)]">
       <FMFLogo size={64} pulse />
       <p className="mt-6 font-mono text-xs tracking-[0.25em] text-[var(--muted)]">
         {SITE.name}

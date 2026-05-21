@@ -14,10 +14,12 @@ export function AppNavLayout({
   className?: string;
 }) {
   return (
-    <div className={cn("app-shell", className)}>
-      <div className="flex min-h-0 flex-1">
+    <div className={cn("app-shell w-full max-w-[100vw] overflow-hidden", className)}>
+      <div className="flex min-h-0 min-w-0 flex-1">
         <MobileBottomNav />
-        <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          {children}
+        </div>
       </div>
     </div>
   );

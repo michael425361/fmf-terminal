@@ -159,7 +159,7 @@ export function AuthModal({ open, reason, onClose }: AuthModalProps) {
       aria-modal="true"
       aria-labelledby="auth-modal-title"
     >
-      <div className="auth-modal-panel flex min-h-0 flex-1 flex-col bg-[var(--background)] lg:mx-auto lg:my-auto lg:max-h-[92vh] lg:w-full lg:max-w-md lg:rounded-lg lg:border lg:border-[var(--border)] lg:shadow-2xl">
+      <div className="auth-modal-panel flex min-h-0 flex-1 flex-col bg-[var(--background)] lg:mx-auto lg:my-auto lg:max-h-[92dvh] lg:w-full lg:max-w-md lg:rounded-lg lg:border lg:border-[var(--border)] lg:shadow-2xl">
         <header className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--surface)]/95 px-4 py-3 backdrop-blur-md">
           <button
             type="button"

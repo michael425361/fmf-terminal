@@ -74,7 +74,7 @@ export function NewsPage() {
 
       <main
         data-app-scroll-root
-        className="app-scroll scrollbar-thin pb-[4.5rem] lg:pb-8"
+        className="app-scroll scrollbar-thin min-w-0 pb-[4.5rem] lg:pb-8"
       >
         <div className="mx-auto max-w-3xl px-4 py-4 lg:px-6 lg:py-6">
           {error && (

@@ -30,7 +30,7 @@ export function DashboardFrame({ main }: { main: React.ReactNode }) {
   return (
     <div
       className={cn(
-        "app-shell",
+        "app-shell w-full max-w-[100vw] overflow-hidden",
         chartFullscreen && "chart-fullscreen-active"
       )}
     >
@@ -52,7 +52,7 @@ export function DashboardFrame({ main }: { main: React.ReactNode }) {
         <main
           data-app-scroll-root
           className={cn(
-            "app-scroll relative flex min-h-0 flex-1 flex-col",
+            "app-scroll relative flex min-h-0 min-w-0 flex-1 flex-col",
             chartFullscreen && "app-scroll-lock",
             !chartFullscreen && "pb-14 lg:pb-0"
           )}

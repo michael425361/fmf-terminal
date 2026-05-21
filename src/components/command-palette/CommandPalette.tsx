@@ -39,6 +39,7 @@ import { MARKET_SYMBOLS } from "@/lib/market-data/symbols";
 import type { SearchResultItem } from "@/lib/command-palette/types";
 import { SearchInput } from "./SearchInput";
 import { ResultList } from "./ResultList";
+import { lockDocumentScroll } from "@/lib/scroll-to-top";
 import { cn } from "@/lib/utils";
 
 export function CommandPalette() {
@@ -150,12 +151,13 @@ export function CommandPalette() {
   const flatResults = searchResults;
 
   useEffect(() => {
-    if (open) {
-      setRecents(loadRecentStore());
-      setQuery("");
-      setSelectedIndex(0);
-      requestAnimationFrame(() => inputRef.current?.focus());
-    }
+    if (!open) return;
+    const unlock = lockDocumentScroll();
+    setRecents(loadRecentStore());
+    setQuery("");
+    setSelectedIndex(0);
+    requestAnimationFrame(() => inputRef.current?.focus());
+    return unlock;
   }, [open]);
 
   useEffect(() => {
@@ -312,12 +314,12 @@ export function CommandPalette() {
 
   return (
     <div
-      className="command-palette-overlay fixed inset-0 z-[200] flex items-start justify-center bg-black/55 p-3 pt-[10vh] backdrop-blur-md sm:p-6"
+      className="command-palette-overlay fixed inset-0 z-[200] flex items-start justify-center bg-black/55 p-3 pt-[10dvh] backdrop-blur-md sm:p-6"
       onClick={closePalette}
       role="presentation"
     >
       <div
-        className="command-palette-panel panel relative flex max-h-[min(72vh,560px)] w-full max-w-2xl flex-col overflow-hidden shadow-2xl"
+        className="command-palette-panel panel relative flex max-h-[min(72dvh,560px)] w-full max-w-2xl flex-col overflow-hidden shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

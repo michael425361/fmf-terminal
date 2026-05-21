@@ -53,7 +53,7 @@ export function TradingChart({ className }: { className?: string }) {
     <section
       data-chart-panel
       className={cn(
-        "panel flex min-h-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-out lg:min-h-[420px]",
+        "panel flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-out lg:min-h-[420px]",
         chartFullscreen &&
           "chart-fullscreen-panel fixed inset-0 z-[75] m-0 min-h-0 flex-1 rounded-none border-0 shadow-none",
         className

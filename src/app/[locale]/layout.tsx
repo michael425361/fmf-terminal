@@ -10,7 +10,9 @@ import "../globals.css";
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
   themeColor: SITE.themeColor,
   colorScheme: "dark" as const,
 };
@@ -52,7 +54,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <html lang={locale}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} h-full overflow-hidden antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} app-body h-full overflow-hidden antialiased`}
       >
         <NextIntlClientProvider messages={messages}>
           {children}

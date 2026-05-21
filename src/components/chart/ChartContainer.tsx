@@ -380,7 +380,10 @@ export function ChartContainer({
   return (
     <div
       ref={containerRef}
-      className={className ?? "h-full w-full min-h-[280px]"}
+      className={
+        className ??
+        "h-full w-full min-h-[280px] max-w-full overflow-hidden touch-manipulation"
+      }
     />
   );
 }
