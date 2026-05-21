@@ -1,6 +1,10 @@
 import { searchChinaAShares } from "@/lib/market-data/china-a-share-search";
+import { searchHKStocks } from "@/lib/market-data/hk-stock-search";
+import { searchTWStocks } from "@/lib/market-data/tw-stock-search";
 import { MARKET_SYMBOLS } from "@/lib/market-data/symbols";
 import { CHINA_A_SHARE_CATALOG } from "./china-a-shares";
+import { HK_STOCK_CATALOG } from "./hk-stocks";
+import { TW_STOCK_CATALOG } from "./tw-stocks";
 import type { AssetCatalogEntry } from "./types";
 
 const EXTRA_ASSETS: AssetCatalogEntry[] = [
@@ -44,15 +48,6 @@ const EXTRA_ASSETS: AssetCatalogEntry[] = [
     assetType: "us_stock",
     category: "us",
   },
-  {
-    id: "hk-0700",
-    symbol: "0700.HK",
-    shortLabel: "0700",
-    name: "Tencent Holdings",
-    assetType: "hk_stock",
-    category: "hk",
-    priceDecimals: 2,
-  },
 ];
 
 function macroToCatalog(): AssetCatalogEntry[] {
@@ -61,7 +56,7 @@ function macroToCatalog(): AssetCatalogEntry[] {
     symbol: m.symbol,
     shortLabel: m.shortLabel,
     name: m.shortLabel,
-    assetType: mapCategoryToAssetType(m.category),
+    assetType: mapCategoryToAssetType(m.category, m.symbol),
     category: m.category,
     invertColors: m.invertColors,
     priceDecimals: m.priceDecimals,
@@ -69,15 +64,19 @@ function macroToCatalog(): AssetCatalogEntry[] {
 }
 
 function mapCategoryToAssetType(
-  category: string
+  category: string,
+  symbol: string
 ): AssetCatalogEntry["assetType"] {
+  if (symbol.startsWith("^")) return "index";
   switch (category) {
     case "us":
       return "index";
     case "china":
       return "cn_stock";
     case "hk":
-      return "index";
+      return "hk_stock";
+    case "tw":
+      return "tw_stock";
     case "fx":
       return "forex";
     case "crypto":
@@ -92,6 +91,8 @@ function mapCategoryToAssetType(
 export const ASSET_CATALOG: AssetCatalogEntry[] = [
   ...EXTRA_ASSETS,
   ...CHINA_A_SHARE_CATALOG,
+  ...HK_STOCK_CATALOG,
+  ...TW_STOCK_CATALOG,
   ...macroToCatalog(),
 ];
 
@@ -107,20 +108,32 @@ export function searchCatalog(query: string, limit = 12): AssetCatalogEntry[] {
   const q = query.trim();
   if (!q) return [];
 
-  const cn = searchChinaAShares(q, limit).map((r) => r.entry);
-  if (cn.length >= limit) return cn;
+  const perMarket = Math.max(4, Math.ceil(limit / 3));
+  const cn = searchChinaAShares(q, perMarket).map((r) => r.entry);
+  const hk = searchHKStocks(q, perMarket).map((r) => r.entry);
+  const tw = searchTWStocks(q, perMarket).map((r) => r.entry);
+
+  const seen = new Set<string>();
+  const merged: AssetCatalogEntry[] = [];
+
+  for (const entry of [...cn, ...hk, ...tw]) {
+    if (seen.has(entry.id)) continue;
+    seen.add(entry.id);
+    merged.push(entry);
+    if (merged.length >= limit) return merged;
+  }
 
   const qLower = q.toLowerCase();
   const rest = ASSET_CATALOG.filter(
     (a) =>
-      !cn.some((c) => c.id === a.id) &&
+      !seen.has(a.id) &&
       (a.symbol.toLowerCase().includes(qLower) ||
         a.shortLabel.toLowerCase().includes(qLower) ||
         a.name.toLowerCase().includes(qLower) ||
         a.id.toLowerCase().includes(qLower))
-  ).slice(0, limit - cn.length);
+  ).slice(0, limit - merged.length);
 
-  return [...cn, ...rest];
+  return [...merged, ...rest];
 }
 
 export { resolveCatalogEntry, registerCatalogEntry } from "./catalog-registry";

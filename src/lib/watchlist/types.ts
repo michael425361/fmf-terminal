@@ -4,6 +4,7 @@ export type AssetType =
   | "us_stock"
   | "cn_stock"
   | "hk_stock"
+  | "tw_stock"
   | "etf"
   | "index"
   | "forex"

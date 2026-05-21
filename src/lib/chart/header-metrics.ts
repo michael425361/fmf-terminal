@@ -180,6 +180,7 @@ export function resolveExchangeCode(
     etf: "US",
     cn_stock: "SSE/SZSE",
     hk_stock: "HKEX",
+    tw_stock: "TWSE",
     index: "INDEX",
     forex: "FX",
     crypto: "CRYPTO",

@@ -27,7 +27,7 @@ export function HeaderToolbar() {
         <BrandMark compact className="sm:hidden" />
         <nav
           className="hidden items-center gap-1 border-l border-[var(--border)] pl-3 md:flex lg:gap-2 lg:pl-4"
-          aria-label={tNav("dashboard")}
+          aria-label={tNav("home")}
         >
           {headerNavItems.map(({ key, href }) => {
             const active = isNavActive(pathname, href, key);

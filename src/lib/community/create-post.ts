@@ -8,7 +8,7 @@ export function parseStockTags(input: string): string[] {
       input
         .split(/[,\s]+/)
         .map((t) => t.trim().replace(/^\$/, "").toUpperCase())
-        .filter((t) => /^[A-Z0-9.]{1,12}$/.test(t))
+        .filter((t) => /^[A-Z0-9]{1,6}(\.(HK|TW))?$/i.test(t))
     ),
   ].slice(0, 8);
 }

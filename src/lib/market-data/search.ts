@@ -5,6 +5,8 @@ import {
   isChinaOrientedQuery,
   searchChinaAShares,
 } from "./china-a-share-search";
+import { isHKOrientedQuery, searchHKStocks } from "./hk-stock-search";
+import { isTWOrientedQuery, searchTWStocks } from "./tw-stock-search";
 import { searchYahooSymbols } from "./yahoo-client";
 import { yahooQuoteToCatalogEntry } from "./symbol-mapper";
 
@@ -14,6 +16,14 @@ export interface MarketSearchResult {
   quoteType?: string;
 }
 
+function isEastAsiaOrientedQuery(query: string): boolean {
+  return (
+    isChinaOrientedQuery(query) ||
+    isHKOrientedQuery(query) ||
+    isTWOrientedQuery(query)
+  );
+}
+
 export async function searchMarketSymbols(
   query: string,
   limit = 16
@@ -21,23 +31,33 @@ export async function searchMarketSymbols(
   const q = query.trim();
   if (!q) return [];
 
-  const chinaOriented = isChinaOrientedQuery(q);
-  const cnLimit = chinaOriented
-    ? Math.min(limit, Math.max(8, Math.ceil(limit * 0.6)))
-    : Math.min(6, Math.ceil(limit * 0.35));
+  const eastAsia = isEastAsiaOrientedQuery(q);
+  const localShare = eastAsia
+    ? Math.min(limit, Math.max(10, Math.ceil(limit * 0.65)))
+    : Math.min(8, Math.ceil(limit * 0.4));
 
-  const cnResults = searchChinaAShares(q, cnLimit);
+  const perLocal = Math.max(3, Math.ceil(localShare / 3));
+
+  const cnResults = searchChinaAShares(q, perLocal);
+  const hkResults = searchHKStocks(q, perLocal);
+  const twResults = searchTWStocks(q, perLocal);
 
   const seen = new Set(
-    cnResults.map((r) => r.entry.symbol.toUpperCase())
+    [...cnResults, ...hkResults, ...twResults].map((r) =>
+      r.entry.symbol.toUpperCase()
+    )
   );
-  const merged: MarketSearchResult[] = [...cnResults];
+  const merged: MarketSearchResult[] = [
+    ...cnResults,
+    ...hkResults,
+    ...twResults,
+  ];
 
   const yahooCount = Math.min(limit * 2, 25);
   const rows = await searchYahooSymbols(q, {
     quotesCount: yahooCount,
-    lang: chinaOriented ? "zh-CN" : "en-US",
-    region: chinaOriented ? "CN" : "US",
+    lang: eastAsia ? "zh-CN" : "en-US",
+    region: eastAsia ? "CN" : "US",
   });
 
   for (const row of rows) {

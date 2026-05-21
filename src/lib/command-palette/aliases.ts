@@ -1,4 +1,6 @@
 import { getChinaAShareSearchAliases } from "@/lib/watchlist/china-a-shares";
+import { getHKStockSearchAliases } from "@/lib/watchlist/hk-stocks";
+import { getTWStockSearchAliases } from "@/lib/watchlist/tw-stocks";
 
 /** Maps catalog id → extra search tokens (EN/ZH aliases, typos) */
 const BASE_ASSET_SEARCH_ALIASES: Record<string, string[]> = {
@@ -29,12 +31,13 @@ const BASE_ASSET_SEARCH_ALIASES: Record<string, string[]> = {
   "us-amd": ["amd", "超微"],
   "us-nvda": ["nvda", "英伟达"],
   "us-tsla": ["tsla", "特斯拉"],
-  "hk-0700": ["tencent", "腾讯", "0700"],
 };
 
 export const ASSET_SEARCH_ALIASES: Record<string, string[]> = {
   ...BASE_ASSET_SEARCH_ALIASES,
   ...getChinaAShareSearchAliases(),
+  ...getHKStockSearchAliases(),
+  ...getTWStockSearchAliases(),
 };
 
 /** Global alias → catalog id */
@@ -57,4 +60,17 @@ export const GLOBAL_QUERY_ALIASES: Record<string, string> = {
   中国平安: "cn-601318",
   创业板etf: "cn-159915",
   沪深300: "cn-510300",
+  腾讯: "hk-0700",
+  美团: "hk-3690",
+  小米: "hk-1810",
+  汇丰: "hk-0005",
+  阿里港股: "hk-9988",
+  阿里巴巴: "hk-9988",
+  台积电: "tw-2330",
+  台積電: "tw-2330",
+  tsmc: "tw-2330",
+  鸿海: "tw-2317",
+  联发科: "tw-2454",
+  华硕: "tw-2357",
+  宏碁: "tw-2353",
 };

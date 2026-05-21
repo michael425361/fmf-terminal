@@ -24,6 +24,9 @@ import {
 } from "@/lib/command-palette/search-engine";
 import { useMarketSearch } from "@/hooks/useMarketSearch";
 import { CHINA_A_SHARE_DEFS } from "@/lib/watchlist/china-a-shares";
+import { HK_STOCK_DEFS } from "@/lib/watchlist/hk-stocks";
+import { TW_STOCK_DEFS } from "@/lib/watchlist/tw-stocks";
+import { getCatalogDisplayName } from "@/lib/watchlist/display";
 import { registerCatalogEntry, resolveCatalogEntry } from "@/lib/watchlist/catalog-registry";
 import {
   getRecentIds,
@@ -80,6 +83,14 @@ export function CommandPalette() {
         map[id] = locale === "zh" ? def.nameZh : def.nameEn;
       }
     }
+    for (const def of HK_STOCK_DEFS) {
+      const id = `hk-${def.code}`;
+      map[id] = locale === "zh" ? def.nameZh : def.nameEn;
+    }
+    for (const def of TW_STOCK_DEFS) {
+      const id = `tw-${def.code}`;
+      map[id] = locale === "zh" ? def.nameZh : def.nameEn;
+    }
     for (const item of items) {
       if (!map[item.id]) map[item.id] = item.name;
     }
@@ -127,7 +138,12 @@ export function CommandPalette() {
     return catalogEntriesToSearchResults(
       yahooResults,
       searchQ,
-      localizedNames
+      Object.fromEntries(
+        yahooResults.map((entry) => [
+          entry.id,
+          localizedNames[entry.id] ?? getCatalogDisplayName(entry, locale),
+        ])
+      )
     );
   }, [searchQ, localizedNames, favoriteIds, recentIds, items, yahooResults]);
 

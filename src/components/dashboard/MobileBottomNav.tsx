@@ -21,7 +21,7 @@ export function MobileBottomNav() {
       <aside className="hidden w-14 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--surface)] lg:flex">
         <nav
           className="flex flex-1 flex-col items-center gap-1 overflow-y-auto py-3 scrollbar-thin"
-          aria-label={t("dashboard")}
+          aria-label={t("home")}
         >
           {primaryNavItems.map(({ icon: Icon, key, href }) => {
             if (!href) return null;

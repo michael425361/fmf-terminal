@@ -10,6 +10,7 @@ import {
   formatSignedPercent,
   getQuoteColorClass,
 } from "@/lib/market-data/format";
+import { MarketBadge } from "@/components/market/MarketBadge";
 import { CategoryIcon } from "./CategoryIcon";
 import { HighlightedText } from "./HighlightedText";
 import { cn } from "@/lib/utils";
@@ -80,9 +81,7 @@ function ResultRow({
               highlights={highlights}
               className="font-mono text-xs font-bold text-[var(--accent)]"
             />
-            <span className="rounded bg-[var(--background)] px-1 py-px text-[8px] font-medium uppercase tracking-wide text-[var(--muted)]">
-              {t(`category.${entry.assetType}`)}
-            </span>
+            <MarketBadge entry={entry} />
           </div>
           <p className="mt-0.5 truncate text-[10px] text-[var(--muted)]">
             <HighlightedText text={displayName} highlights={highlights} />

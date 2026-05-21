@@ -17,7 +17,7 @@ export type AppNavHref = "/" | "/watchlist" | "/news" | "/community";
 export interface AppNavItem {
   icon: LucideIcon;
   key:
-    | "dashboard"
+    | "home"
     | "watchlist"
     | "news"
     | "community"
@@ -31,7 +31,7 @@ export interface AppNavItem {
 
 /** Primary app sections — same on mobile bottom bar and desktop sidebar. */
 export const primaryNavItems: AppNavItem[] = [
-  { icon: LayoutDashboard, key: "dashboard", href: "/" },
+  { icon: LayoutDashboard, key: "home", href: "/" },
   { icon: List, key: "watchlist", href: "/watchlist" },
   { icon: Newspaper, key: "news", href: "/news" },
   { icon: Users, key: "community", href: "/community" },
@@ -49,7 +49,7 @@ export const secondaryNavItems: AppNavItem[] = [
 /** Header text links (desktop). */
 export const headerNavItems = primaryNavItems.filter(
   (item): item is AppNavItem & { href: AppNavHref } =>
-    item.href !== null && item.key !== "charts" && item.key !== "dashboard"
+    item.href !== null && item.key !== "charts" && item.key !== "home"
 );
 
 export function isNavActive(
@@ -57,9 +57,8 @@ export function isNavActive(
   href: AppNavHref,
   key: AppNavItem["key"]
 ): boolean {
-  if (key === "charts") {
-    return pathname === "/" || pathname.startsWith("/chart");
-  }
+  if (key === "charts") return false;
+  if (key === "home") return pathname === "/";
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
 }

@@ -32,8 +32,11 @@ export function CategoryIcon({ assetType, className }: CategoryIconProps) {
     case "etf":
       return <BarChart3 className={cn(iconClass, "text-[var(--muted)]")} />;
     case "cn_stock":
+      return <Building2 className={cn(iconClass, "text-red-400")} />;
     case "hk_stock":
-      return <Building2 className={cn(iconClass, "text-[var(--negative)]")} />;
+      return <Building2 className={cn(iconClass, "text-amber-300")} />;
+    case "tw_stock":
+      return <Building2 className={cn(iconClass, "text-teal-300")} />;
     case "us_stock":
       return <Coins className={cn(iconClass, "text-[var(--foreground)]")} />;
     default:

@@ -34,6 +34,9 @@ function inferFromExchange(exchange?: string): {
   if (["HKG", "HK"].some((e) => ex.includes(e))) {
     return { category: "hk", assetType: "hk_stock" };
   }
+  if (["TPE", "TW", "TWO", "TAI"].some((e) => ex.includes(e))) {
+    return { category: "tw", assetType: "tw_stock" };
+  }
   if (["CCC", "CRY"].some((e) => ex.includes(e))) {
     return { category: "crypto", assetType: "crypto" };
   }
@@ -90,6 +93,30 @@ export function yahooQuoteToCatalogEntry(
     quote.longname?.trim() ||
     quote.shortname?.trim() ||
     symbol;
+
+  const upper = symbol.toUpperCase();
+  if (upper.endsWith(".HK")) {
+    return {
+      id: catalogIdFromSymbol(symbol),
+      symbol,
+      shortLabel: symbol.split(".")[0],
+      name,
+      assetType: "hk_stock",
+      category: "hk",
+      priceDecimals: 2,
+    };
+  }
+  if (upper.endsWith(".TW")) {
+    return {
+      id: catalogIdFromSymbol(symbol),
+      symbol,
+      shortLabel: symbol.split(".")[0],
+      name,
+      assetType: "tw_stock",
+      category: "tw",
+      priceDecimals: 2,
+    };
+  }
 
   const shortLabel = symbol.includes(".")
     ? symbol.split(".")[0]

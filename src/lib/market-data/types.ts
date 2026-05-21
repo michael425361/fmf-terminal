@@ -2,6 +2,7 @@ export type MarketCategory =
   | "us"
   | "china"
   | "hk"
+  | "tw"
   | "fx"
   | "crypto"
   | "commodities";

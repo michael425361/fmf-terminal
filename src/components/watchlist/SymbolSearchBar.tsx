@@ -4,7 +4,8 @@ import { Search } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { useMarketSearch } from "@/hooks/useMarketSearch";
-import { getChinaAShareDef } from "@/lib/watchlist/china-a-shares";
+import { MarketBadge } from "@/components/market/MarketBadge";
+import { getCatalogDisplayName } from "@/lib/watchlist/display";
 import { registerCatalogEntry } from "@/lib/watchlist/catalog-registry";
 import type { AssetCatalogEntry } from "@/lib/watchlist/types";
 import { useWatchlist } from "@/providers/WatchlistProvider";
@@ -28,11 +29,8 @@ export function SymbolSearchBar({ onSelect, className }: SymbolSearchBarProps) {
     limit: 12,
   });
 
-  const displayName = (entry: AssetCatalogEntry) => {
-    const cnDef = getChinaAShareDef(entry.id);
-    if (cnDef) return locale === "zh" ? cnDef.nameZh : cnDef.nameEn;
-    return entry.name;
-  };
+  const displayName = (entry: AssetCatalogEntry) =>
+    getCatalogDisplayName(entry, locale);
 
   const selectEntry = (entry: AssetCatalogEntry) => {
     registerCatalogEntry(entry);
@@ -76,8 +74,11 @@ export function SymbolSearchBar({ onSelect, className }: SymbolSearchBarProps) {
                   className="min-w-0 flex-1 text-left"
                   onClick={() => selectEntry(entry)}
                 >
-                  <div className="font-mono text-xs font-semibold text-[var(--accent)]">
-                    {entry.shortLabel}
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono text-xs font-semibold text-[var(--accent)]">
+                      {entry.symbol}
+                    </span>
+                    <MarketBadge entry={entry} />
                   </div>
                   <div className="truncate text-[10px] text-[var(--muted)]">
                     {displayName(entry)}

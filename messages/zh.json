@@ -95,6 +95,7 @@
       "us_stock": "股票",
       "cn_stock": "A股",
       "hk_stock": "港股",
+      "tw_stock": "台股",
       "etf": "ETF",
       "index": "指数",
       "forex": "外汇",
@@ -115,7 +116,8 @@
     }
   },
   "nav": {
-    "dashboard": "仪表盘",
+    "home": "主页",
+    "dashboard": "主页",
     "charts": "图表",
     "portfolio": "持仓",
     "watchlist": "自选",
@@ -305,6 +307,7 @@
         "us_stock": "美股",
         "cn_stock": "A股",
         "hk_stock": "港股",
+        "tw_stock": "台股",
         "etf": "ETF",
         "index": "指数",
         "forex": "外汇",
