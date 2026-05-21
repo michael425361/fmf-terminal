@@ -4,6 +4,8 @@ import { Bell, Search, Settings } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { BrandMark } from "@/components/brand/BrandMark";
+import { Link, usePathname } from "@/i18n/navigation";
+import { headerNavItems, isNavActive } from "@/lib/navigation/items";
 import { portfolioSnapshot } from "@/lib/mock-data";
 import { cn, formatPrice } from "@/lib/utils";
 import { useCommandPalette } from "@/providers/CommandPaletteProvider";
@@ -11,7 +13,9 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export function HeaderToolbar() {
   const t = useTranslations("header");
+  const tNav = useTranslations("nav");
   const tPalette = useTranslations("commandPalette");
+  const pathname = usePathname();
   const { openPalette } = useCommandPalette();
   const { totalValue, dayPnl, dayPnlPct } = portfolioSnapshot;
   const up = dayPnl >= 0;
@@ -21,7 +25,29 @@ export function HeaderToolbar() {
       <div className="flex items-center gap-3 sm:gap-6">
         <BrandMark className="hidden sm:flex" />
         <BrandMark compact className="sm:hidden" />
-        <div className="hidden items-center gap-4 border-l border-[var(--border)] pl-4 md:flex">
+        <nav
+          className="hidden items-center gap-1 border-l border-[var(--border)] pl-3 md:flex lg:gap-2 lg:pl-4"
+          aria-label={tNav("dashboard")}
+        >
+          {headerNavItems.map(({ key, href }) => {
+            const active = isNavActive(pathname, href, key);
+            return (
+              <Link
+                key={key}
+                href={href}
+                className={cn(
+                  "rounded px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide transition",
+                  active
+                    ? "bg-[var(--accent-dim)]/30 text-[var(--accent)]"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                )}
+              >
+                {tNav(key)}
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="hidden items-center gap-4 border-l border-[var(--border)] pl-4 xl:flex">
           <Stat label={t("portfolio")} value={`$${formatPrice(totalValue)}`} />
           <Stat
             label={t("dayPnl")}

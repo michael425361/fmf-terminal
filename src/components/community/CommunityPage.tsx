@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { AuthButton } from "@/components/auth/AuthButton";
-import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
+import { AppNavLayout } from "@/components/layout/AppNavLayout";
 import { useAuth } from "@/providers/AuthProvider";
 import {
   buildPostFromDraft,
@@ -384,7 +384,7 @@ export function CommunityPage() {
   );
 
   return (
-    <div className="app-shell relative">
+    <AppNavLayout className="relative">
       <header className="sticky top-0 z-30 shrink-0 border-b border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-3xl items-center gap-2 px-4 py-3 lg:px-6">
           <Link
@@ -485,7 +485,6 @@ export function CommunityPage() {
         </div>
       )}
 
-      <MobileBottomNav />
-    </div>
+    </AppNavLayout>
   );
 }
