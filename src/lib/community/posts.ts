@@ -1,8 +1,14 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import { initialsFromName } from "@/lib/auth/profile";
 import type { UserProfile } from "@/lib/auth/profile";
 import { createClient } from "@/lib/supabase/client";
 import { parseStockTags } from "./create-post";
+import {
+  formatSupabaseError,
+  logSupabaseEmpty,
+  logSupabaseError,
+  logSupabaseSuccess,
+} from "./supabase-log";
 import type {
   CommunityCategory,
   CommunityPost,
@@ -59,17 +65,33 @@ export function postRowToCommunityPost(row: PostRow): CommunityPost {
   };
 }
 
-function logPostsFetch(
+async function diagnoseEmptyPostsFetch(
+  supabase: SupabaseClient,
   category: CommunityCategory,
-  data: PostRow[] | null,
-  error: { message: string } | null
-) {
-  if (process.env.NODE_ENV !== "development") return;
-  console.log("[community] fetchPosts", {
+  error: PostgrestError | null
+): Promise<void> {
+  const { count: totalCount, error: totalErr } = await supabase
+    .from("posts")
+    .select("*", { count: "exact", head: true });
+
+  const { count: categoryCount, error: catErr } = await supabase
+    .from("posts")
+    .select("*", { count: "exact", head: true })
+    .eq("category", category);
+
+  logSupabaseEmpty("fetchPosts", {
     category,
-    count: data?.length ?? 0,
-    error: error?.message ?? null,
-    ids: data?.map((r) => r.id) ?? [],
+    filterError: error ? formatSupabaseError(error) : null,
+    totalCount: totalCount ?? 0,
+    categoryCount: categoryCount ?? 0,
+    totalCountError: totalErr ? formatSupabaseError(totalErr) : null,
+    categoryCountError: catErr ? formatSupabaseError(catErr) : null,
+    hint:
+      totalCount === 0 && !totalErr
+        ? "RLS likely blocking SELECT on public.posts — run supabase/migrations/005_fix_posts_rls.sql"
+        : categoryCount === 0 && (totalCount ?? 0) > 0
+          ? "Posts exist but none in this category tab"
+          : null,
   });
 }
 
@@ -85,13 +107,24 @@ export async function fetchPosts(
     .eq("category", category)
     .order("created_at", { ascending: false });
 
-  logPostsFetch(category, data as PostRow[] | null, error);
-
   if (error) {
-    throw new Error(error.message);
+    logSupabaseError("fetchPosts", error, { category });
+    throw new Error(`fetchPosts: ${formatSupabaseError(error)}`);
   }
 
-  return ((data ?? []) as PostRow[]).map(postRowToCommunityPost);
+  const rows = (data ?? []) as PostRow[];
+
+  if (rows.length === 0) {
+    await diagnoseEmptyPostsFetch(supabase, category, null);
+  } else {
+    logSupabaseSuccess("fetchPosts", {
+      category,
+      count: rows.length,
+      ids: rows.map((r) => r.id),
+    });
+  }
+
+  return rows.map(postRowToCommunityPost);
 }
 
 export async function fetchPostById(
@@ -106,8 +139,15 @@ export async function fetchPostById(
     .eq("id", postId)
     .maybeSingle();
 
-  if (error) throw new Error(error.message);
-  if (!data) return null;
+  if (error) {
+    logSupabaseError("fetchPostById", error, { postId });
+    throw new Error(`fetchPostById: ${formatSupabaseError(error)}`);
+  }
+
+  if (!data) {
+    logSupabaseEmpty("fetchPostById", { postId });
+    return null;
+  }
 
   return postRowToCommunityPost(data as PostRow);
 }
@@ -119,28 +159,46 @@ export async function createPost(
 ): Promise<CommunityPost> {
   const supabase = client ?? createClient();
 
+  const payload = {
+    user_id: author.id,
+    username: author.username,
+    avatar_url: author.avatarUrl,
+    category: draft.category,
+    title: draft.title.trim(),
+    content: draft.content.trim(),
+    ticker_tags: parseStockTags(draft.tagsInput),
+  };
+
   const { data, error } = await supabase
     .from("posts")
-    .insert({
-      user_id: author.id,
-      username: author.username,
-      avatar_url: author.avatarUrl,
-      category: draft.category,
-      title: draft.title.trim(),
-      content: draft.content.trim(),
-      ticker_tags: parseStockTags(draft.tagsInput),
-    })
+    .insert(payload)
     .select(POST_COLUMNS)
     .single();
 
   if (error) {
-    throw new Error(error.message);
+    logSupabaseError("createPost.insert", error, {
+      category: draft.category,
+      userId: author.id,
+    });
+    throw new Error(`createPost: ${formatSupabaseError(error)}`);
   }
 
   const post = postRowToCommunityPost(data as PostRow);
-  if (process.env.NODE_ENV === "development") {
-    console.log("[community] createPost", { id: post.id, category: post.category });
+  logSupabaseSuccess("createPost.insert", {
+    id: post.id,
+    category: post.category,
+    userId: post.userId,
+  });
+
+  const readable = await fetchPostById(post.id, supabase);
+  if (!readable) {
+    const msg =
+      "createPost: row inserted but not readable after insert. Run 005_fix_posts_rls.sql — posts SELECT policy missing for anon/authenticated.";
+    console.error(`[community] ${msg}`, { postId: post.id, category: post.category });
+    throw new Error(msg);
   }
+
+  logSupabaseSuccess("createPost.verifyRead", { id: post.id });
   return post;
 }
 
@@ -153,6 +211,7 @@ export async function deletePost(
   const { error } = await supabase.from("posts").delete().eq("id", postId);
 
   if (error) {
-    throw new Error(error.message);
+    logSupabaseError("deletePost", error, { postId });
+    throw new Error(`deletePost: ${formatSupabaseError(error)}`);
   }
 }

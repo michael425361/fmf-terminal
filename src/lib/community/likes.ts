@@ -1,5 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import {
+  formatSupabaseError,
+  logSupabaseError,
+  logSupabaseSuccess,
+} from "./supabase-log";
 
 const DUPLICATE_KEY = "23505";
 
@@ -14,8 +19,11 @@ export async function likePost(
     .insert({ post_id: postId, user_id: userId });
 
   if (error && error.code !== DUPLICATE_KEY) {
-    throw new Error(error.message);
+    logSupabaseError("likePost", error, { postId, userId });
+    throw new Error(`likePost: ${formatSupabaseError(error)}`);
   }
+
+  logSupabaseSuccess("likePost", { postId, userId });
 }
 
 export async function unlikePost(
@@ -30,7 +38,12 @@ export async function unlikePost(
     .eq("post_id", postId)
     .eq("user_id", userId);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    logSupabaseError("unlikePost", error, { postId, userId });
+    throw new Error(`unlikePost: ${formatSupabaseError(error)}`);
+  }
+
+  logSupabaseSuccess("unlikePost", { postId, userId });
 }
 
 export async function hasLiked(
@@ -57,19 +70,21 @@ export async function batchHasLiked(
     .eq("user_id", userId)
     .in("post_id", postIds);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    logSupabaseError("batchHasLiked", error, { userId, postIds });
+    throw new Error(`batchHasLiked: ${formatSupabaseError(error)}`);
+  }
 
   for (const id of postIds) result[id] = false;
   for (const row of data ?? []) {
     result[row.post_id as string] = true;
   }
 
-  if (process.env.NODE_ENV === "development") {
-    console.log("[community] batchHasLiked", {
-      userId,
-      liked: Object.entries(result).filter(([, v]) => v).map(([k]) => k),
-    });
-  }
+  logSupabaseSuccess("batchHasLiked", {
+    userId,
+    checked: postIds.length,
+    liked: Object.entries(result).filter(([, v]) => v).map(([k]) => k),
+  });
 
   return result;
 }
@@ -84,6 +99,10 @@ export async function getLikeCount(
     .select("*", { count: "exact", head: true })
     .eq("post_id", postId);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    logSupabaseError("getLikeCount", error, { postId });
+    throw new Error(`getLikeCount: ${formatSupabaseError(error)}`);
+  }
+
   return count ?? 0;
 }

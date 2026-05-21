@@ -24,9 +24,7 @@ export async function fetchPostInteractionMeta(
     ]);
     return { likedByMe, bookmarkedByMe };
   } catch (err) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[community] interaction meta failed:", err);
-    }
+    console.error("[community] fetchPostInteractionMeta failed", err);
     return { likedByMe: {}, bookmarkedByMe: {} };
   }
 }

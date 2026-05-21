@@ -113,9 +113,9 @@ export function CommunityPage() {
       void loadCommentsForIds(postIds, gen);
     } catch (err) {
       if (loadGenRef.current !== gen) return;
-      setLoadError(
-        err instanceof Error ? err.message : t("loadError")
-      );
+      const message = err instanceof Error ? err.message : t("loadError");
+      console.error("[community] loadPosts failed", { tab, message, err });
+      setLoadError(message);
     } finally {
       if (loadGenRef.current === gen) setLoading(false);
     }
