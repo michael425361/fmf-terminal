@@ -26,6 +26,12 @@ export async function GET(request: Request) {
   try {
     const data = await fetchCandleSeries(symbol, timeframe);
     if (!data) {
+      console.warn("[candles/api] unavailable", {
+        symbol: rawSymbol,
+        resolvedSymbol: symbol,
+        timeframe,
+        isFallback: false,
+      });
       return NextResponse.json(
         { error: "Candle data unavailable" },
         { status: 404 }

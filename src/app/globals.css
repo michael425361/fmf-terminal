@@ -231,6 +231,44 @@ html.viewport-locked body {
   border-radius: 2px;
 }
 
+@keyframes ticker-tick-up {
+  0% {
+    color: var(--positive);
+    transform: translateY(2px);
+  }
+  40% {
+    color: var(--positive);
+    transform: translateY(0);
+  }
+  100% {
+    color: var(--foreground);
+    transform: translateY(0);
+  }
+}
+
+@keyframes ticker-tick-down {
+  0% {
+    color: var(--negative);
+    transform: translateY(-2px);
+  }
+  40% {
+    color: var(--negative);
+    transform: translateY(0);
+  }
+  100% {
+    color: var(--foreground);
+    transform: translateY(0);
+  }
+}
+
+.ticker-price-tick-up {
+  animation: ticker-tick-up 0.55s ease-out;
+}
+
+.ticker-price-tick-down {
+  animation: ticker-tick-down 0.55s ease-out;
+}
+
 .watchlist-active {
   background: linear-gradient(
     90deg,

@@ -14,6 +14,7 @@ interface QuoteValueProps {
   quote: MarketQuote;
   previous?: MarketQuote;
   showChange?: boolean;
+  tickClass?: string;
   className?: string;
 }
 
@@ -21,14 +22,21 @@ export function QuoteValue({
   quote,
   previous,
   showChange = true,
+  tickClass,
   className,
 }: QuoteValueProps) {
   const decimals = quote.priceDecimals ?? 2;
   const flash = getFlashClass(quote, previous);
+  const tick = tickClass ?? getFlashClass(quote, previous);
 
   return (
     <div className={cn("transition-colors duration-500", flash, className)}>
-      <div className="font-mono text-sm font-medium text-[var(--foreground)] transition-all duration-300">
+      <div
+        className={cn(
+          "font-mono text-sm font-medium text-[var(--foreground)] transition-all duration-300",
+          tick
+        )}
+      >
         {formatQuotePrice(quote.price, decimals, quote.category)}
       </div>
       {showChange && (

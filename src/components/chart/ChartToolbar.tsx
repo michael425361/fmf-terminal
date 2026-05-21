@@ -81,6 +81,11 @@ export function ChartToolbar({
           onClick={() => toggle("vwap")}
           label="VWAP"
         />
+        <IndButton
+          active={indicators.rsi}
+          onClick={() => toggle("rsi")}
+          label={t("ind.rsi")}
+        />
       </div>
     </div>
   );

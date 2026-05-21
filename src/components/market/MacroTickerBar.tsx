@@ -9,16 +9,17 @@ import {
 } from "react";
 import { useTranslations } from "next-intl";
 import { TICKER_BAR_SYMBOLS } from "@/lib/market-data/symbols";
-import { useMarketData } from "@/providers/MarketDataProvider";
+import { useLiveTicker } from "@/hooks/use-live-ticker";
 import { useWatchlist } from "@/providers/WatchlistProvider";
 import { TickerChip } from "./TickerChip";
 import { TickerSkeleton } from "./MarketSkeleton";
+import { MarketSessionChips } from "./MarketSessionChips";
 
 export function MacroTickerBar() {
   const t = useTranslations("tickerBar");
-  const { status, getQuote, getPreviousQuote } = useMarketData();
+  const { ready, getQuote, getPreviousQuote } = useLiveTicker();
   const { activeId, setActive } = useWatchlist();
-  const loading = status === "loading" || status === "idle";
+  const loading = !ready;
 
   const symbols = TICKER_BAR_SYMBOLS;
   const listRef = useRef<HTMLDivElement>(null);
@@ -119,6 +120,7 @@ export function MacroTickerBar() {
       onKeyDown={handleListKeyDown}
       className="macro-ticker-bar flex items-stretch overflow-x-auto scrollbar-thin"
     >
+      <MarketSessionChips />
       {loading ? (
         <TickerSkeleton count={symbols.length} />
       ) : (

@@ -28,11 +28,25 @@ export function detectMarketFromSymbol(symbol: string): DetectedMarket {
   const base = upper.includes(".") ? upper.split(".")[0] : upper;
 
   if (!upper.includes(".")) {
-    if (/^\d+$/.test(base)) return "cn";
+    if (/^\d{6}$/.test(base)) return "cn";
+    if (/^\d{1,5}$/.test(base)) return "unknown";
     if (/^[A-Z][A-Z0-9.-]*$/.test(base)) return "us";
   }
 
   return "unknown";
+}
+
+function resolveNumericCatalogSymbol(digits: string): string | null {
+  const code = digits.replace(/\D/g, "");
+  if (!code) return null;
+
+  const hkEntry = getCatalogEntryById(`hk-${padHKCode(code)}`);
+  if (hkEntry?.symbol) return formatProviderSymbol(hkEntry.symbol);
+
+  const twEntry = getCatalogEntryById(`tw-${code}`);
+  if (twEntry?.symbol) return formatProviderSymbol(twEntry.symbol);
+
+  return null;
 }
 
 function normalizeChinaNumeric(code: string): string {
@@ -72,11 +86,22 @@ function formatProviderSymbol(raw: string): string {
     return upper.replace(/\.SH$/, ".SS");
   }
 
-  const market = detectMarketFromSymbol(raw);
+  if (/^\d+$/.test(upper)) {
+    const catalogSym = resolveNumericCatalogSymbol(upper);
+    if (catalogSym) return catalogSym;
 
-  if (market === "cn" && /^\d+$/.test(upper)) {
-    return normalizeChinaNumeric(upper);
+    if (upper.length >= 6) return normalizeChinaNumeric(upper);
+    if (/^\d{4}$/.test(upper)) {
+      const hkSym = `${padHKCode(upper)}.HK`;
+      const twSym = `${upper}.TW`;
+      if (getCatalogEntryBySymbol(hkSym)) return hkSym;
+      if (getCatalogEntryBySymbol(twSym)) return twSym;
+      if (upper.startsWith("0")) return hkSym;
+      return twSym;
+    }
   }
+
+  const market = detectMarketFromSymbol(raw);
 
   if (market === "hk" && /^\d+$/.test(upper)) {
     return `${padHKCode(upper)}.HK`;
@@ -84,6 +109,10 @@ function formatProviderSymbol(raw: string): string {
 
   if (market === "tw" && /^\d+$/.test(upper)) {
     return `${upper.replace(/\D/g, "")}.TW`;
+  }
+
+  if (market === "cn" && /^\d+$/.test(upper)) {
+    return normalizeChinaNumeric(upper);
   }
 
   return upper.includes(".") ? upper : raw.toUpperCase();

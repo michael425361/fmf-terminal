@@ -1,4 +1,7 @@
-import { ColorType, type ChartOptions } from "lightweight-charts";
+import { ColorType, type ChartOptions, type Time } from "lightweight-charts";
+import type { ChartTimeframe } from "./types";
+import { createChartTimeFormatter } from "./chart-scale";
+import { getProfessionalCrosshairOptions } from "./crosshair";
 
 export const CHART_COLORS = {
   background: "#0f1218",
@@ -11,6 +14,8 @@ export const CHART_COLORS = {
   ma20: "#3b82f6",
   ma50: "#a855f7",
   vwap: "#f59e0b",
+  rsi: "#e879f9",
+  rsiBand: "rgba(232, 121, 249, 0.12)",
   areaTop: "rgba(34, 197, 94, 0.35)",
   areaBottom: "rgba(34, 197, 94, 0.02)",
   line: "#22c55e",
@@ -18,8 +23,18 @@ export const CHART_COLORS = {
 
 export function getChartOptions(
   width: number,
-  height: number
+  height: number,
+  options?: {
+    timezone?: string;
+    timeframe?: ChartTimeframe;
+  }
 ) {
+  const timeframe = options?.timeframe ?? "1D";
+  const timeFormatter = createChartTimeFormatter(
+    options?.timezone,
+    timeframe
+  );
+
   return {
     width,
     height,
@@ -33,25 +48,32 @@ export function getChartOptions(
       vertLines: { color: CHART_COLORS.grid },
       horzLines: { color: CHART_COLORS.grid },
     },
-    crosshair: {
-      mode: 1,
-      vertLine: {
-        color: CHART_COLORS.crosshair,
-        labelBackgroundColor: "#161b24",
-      },
-      horzLine: {
-        color: CHART_COLORS.crosshair,
-        labelBackgroundColor: "#161b24",
-      },
-    },
+    crosshair: getProfessionalCrosshairOptions(),
     rightPriceScale: {
       borderColor: CHART_COLORS.border,
       scaleMargins: { top: 0.08, bottom: 0.22 },
+    },
+    localization: {
+      timeFormatter: (time: Time) => {
+        const sec =
+          typeof time === "number"
+            ? time
+            : typeof time === "object" && time !== null && "year" in time
+              ? Math.floor(Date.UTC(time.year, time.month - 1, time.day) / 1000)
+              : 0;
+        return timeFormatter(sec);
+      },
     },
     timeScale: {
       borderColor: CHART_COLORS.border,
       timeVisible: true,
       secondsVisible: false,
+      rightOffset: 10,
+      barSpacing: 6,
+      minBarSpacing: 2,
+      maxBarSpacing: 12,
+      fixLeftEdge: false,
+      fixRightEdge: false,
     },
     handleScroll: {
       mouseWheel: true,

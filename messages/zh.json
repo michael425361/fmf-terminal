@@ -253,6 +253,23 @@
     "session": "交易时段",
     "selectHint": "按 Enter 加载图表"
   },
+  "marketStatus": {
+    "stripLabel": "交易所交易状态",
+    "usOpen": "美股盘中",
+    "usPre": "美股盘前",
+    "usPost": "美股盘后",
+    "usClosed": "美股休市",
+    "hkOpen": "港股盘中",
+    "hkLunch": "港股午休",
+    "hkClosed": "港股休市",
+    "twOpen": "台股盘中",
+    "twLunch": "台股午休",
+    "twClosed": "台股休市",
+    "cnOpen": "A股盘中",
+    "cnLunch": "A股午休",
+    "cnClosed": "A股休市",
+    "crypto24h": "24H"
+  },
   "tradingChart": {
     "noSymbol": "请从自选列表选择标的",
     "noData": "暂无图表数据",
@@ -271,7 +288,8 @@
       "line": "折线"
     },
     "ind": {
-      "volume": "成交量"
+      "volume": "成交量",
+      "rsi": "RSI"
     },
     "enterFullscreen": "全屏图表",
     "exitFullscreen": "退出全屏",

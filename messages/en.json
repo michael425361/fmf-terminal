@@ -253,6 +253,23 @@
     "session": "Session",
     "selectHint": "Enter to load chart"
   },
+  "marketStatus": {
+    "stripLabel": "Exchange session status",
+    "usOpen": "US OPEN",
+    "usPre": "US PRE-MKT",
+    "usPost": "US AFTER-HRS",
+    "usClosed": "US CLOSED",
+    "hkOpen": "HK OPEN",
+    "hkLunch": "HK LUNCH",
+    "hkClosed": "HK CLOSED",
+    "twOpen": "TW OPEN",
+    "twLunch": "TW LUNCH",
+    "twClosed": "TW CLOSED",
+    "cnOpen": "CN OPEN",
+    "cnLunch": "CN LUNCH",
+    "cnClosed": "CN CLOSED",
+    "crypto24h": "24H"
+  },
   "tradingChart": {
     "noSymbol": "Select a symbol from your watchlist",
     "noData": "No chart data available",
@@ -271,7 +288,8 @@
       "line": "Line"
     },
     "ind": {
-      "volume": "Vol"
+      "volume": "Vol",
+      "rsi": "RSI"
     },
     "enterFullscreen": "Fullscreen chart",
     "exitFullscreen": "Exit fullscreen",

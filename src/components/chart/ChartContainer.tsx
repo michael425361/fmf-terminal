@@ -16,16 +16,26 @@ import {
   type MouseEventParams,
   type Time,
 } from "lightweight-charts";
-import type { OHLCVBar, ChartType, ChartIndicatorState } from "@/lib/chart/types";
+import type {
+  OHLCVBar,
+  ChartType,
+  ChartIndicatorState,
+  ChartTimeframe,
+  CrosshairData,
+} from "@/lib/chart/types";
 import { calcMA20, calcMA50, calcVWAP } from "@/lib/chart/indicators";
+import { calcRSI } from "@/lib/chart/rsi";
+import { getTimeScaleLayout } from "@/lib/chart/chart-scale";
+import { resolveRealTime } from "@/lib/chart/session-filter";
 import { CHART_COLORS, getChartOptions } from "@/lib/chart/theme";
-import type { CrosshairData } from "@/lib/chart/types";
-import { sanitizeCandleBarsForChart } from "@/lib/chart/sanitize-candles";
 
 interface ChartContainerProps {
   bars: OHLCVBar[];
   chartType: ChartType;
+  timeframe: ChartTimeframe;
+  timezone?: string;
   indicators: ChartIndicatorState;
+  realTimeLookup?: Map<number, number>;
   onCrosshair: (data: CrosshairData | null) => void;
   className?: string;
 }
@@ -54,6 +64,45 @@ interface SeriesRefs {
   ma20: React.MutableRefObject<AnySeries | null>;
   ma50: React.MutableRefObject<AnySeries | null>;
   vwap: React.MutableRefObject<AnySeries | null>;
+  rsi: React.MutableRefObject<AnySeries | null>;
+}
+
+function applyPaneMargins(
+  chart: IChartApi,
+  indicators: ChartIndicatorState
+): void {
+  const hasVol = indicators.volume;
+  const hasRsi = indicators.rsi;
+
+  if (hasRsi && hasVol) {
+    chart.priceScale("right").applyOptions({
+      scaleMargins: { top: 0.05, bottom: 0.48 },
+    });
+    chart.priceScale("volume").applyOptions({
+      scaleMargins: { top: 0.54, bottom: 0.28 },
+    });
+    chart.priceScale("rsi").applyOptions({
+      scaleMargins: { top: 0.74, bottom: 0.04 },
+    });
+  } else if (hasRsi) {
+    chart.priceScale("right").applyOptions({
+      scaleMargins: { top: 0.05, bottom: 0.32 },
+    });
+    chart.priceScale("rsi").applyOptions({
+      scaleMargins: { top: 0.7, bottom: 0.04 },
+    });
+  } else if (hasVol) {
+    chart.priceScale("right").applyOptions({
+      scaleMargins: { top: 0.06, bottom: 0.26 },
+    });
+    chart.priceScale("volume").applyOptions({
+      scaleMargins: { top: 0.82, bottom: 0 },
+    });
+  } else {
+    chart.priceScale("right").applyOptions({
+      scaleMargins: { top: 0.06, bottom: 0.08 },
+    });
+  }
 }
 
 function clearAllSeries(
@@ -65,12 +114,16 @@ function clearAllSeries(
   safeRemoveSeries(chart, refs.ma20);
   safeRemoveSeries(chart, refs.ma50);
   safeRemoveSeries(chart, refs.vwap);
+  safeRemoveSeries(chart, refs.rsi);
 }
 
 export function ChartContainer({
   bars,
   chartType,
+  timeframe,
+  timezone,
   indicators,
+  realTimeLookup,
   onCrosshair,
   className,
 }: ChartContainerProps) {
@@ -81,12 +134,20 @@ export function ChartContainer({
   const ma20Ref = useRef<AnySeries | null>(null);
   const ma50Ref = useRef<AnySeries | null>(null);
   const vwapRef = useRef<AnySeries | null>(null);
+  const rsiRef = useRef<AnySeries | null>(null);
   const barsRef = useRef<OHLCVBar[]>([]);
+  const realTimeLookupRef = useRef<Map<number, number>>(new Map());
 
   const mountedRef = useRef(false);
   const updateTokenRef = useRef(0);
   const onCrosshairRef = useRef(onCrosshair);
   onCrosshairRef.current = onCrosshair;
+  const timeframeRef = useRef(timeframe);
+  const timezoneRef = useRef(timezone);
+  timeframeRef.current = timeframe;
+  timezoneRef.current = timezone;
+
+  realTimeLookupRef.current = realTimeLookup ?? new Map();
 
   const seriesRefs: SeriesRefs = {
     main: mainSeriesRef,
@@ -94,6 +155,7 @@ export function ChartContainer({
     ma20: ma20Ref,
     ma50: ma50Ref,
     vwap: vwapRef,
+    rsi: rsiRef,
   };
 
   const isChartAlive = useCallback((chart?: IChartApi | null) => {
@@ -108,7 +170,7 @@ export function ChartContainer({
     (chart: IChartApi, data: OHLCVBar[], type: ChartType, token: number) => {
       if (!isChartAlive(chart) || token !== updateTokenRef.current) return;
 
-      const clean = sanitizeCandleBarsForChart(data, { logWarnings: false });
+      const clean = data;
       if (clean.length === 0) {
         clearAllSeries(chart, seriesRefs);
         barsRef.current = [];
@@ -197,19 +259,11 @@ export function ChartContainer({
             safeRemoveSeries(chart, { current: vol });
             return;
           }
-          chart.priceScale("volume").applyOptions({
-            scaleMargins: { top: 0.82, bottom: 0 },
-          });
-          chart.priceScale("right").applyOptions({
-            scaleMargins: { top: 0.06, bottom: 0.26 },
-          });
           vol.setData(volData);
           volumeSeriesRef.current = vol;
-        } else {
-          chart.priceScale("right").applyOptions({
-            scaleMargins: { top: 0.06, bottom: 0.08 },
-          });
         }
+
+        applyPaneMargins(chart, indicators);
 
         if (indicators.ma20 && clean.length >= 20) {
           const ma = chart.addSeries(LineSeries, {
@@ -272,7 +326,40 @@ export function ChartContainer({
           vwapRef.current = vwap;
         }
 
+        if (indicators.rsi && clean.length >= 15) {
+          const rsi = chart.addSeries(LineSeries, {
+            color: CHART_COLORS.rsi,
+            lineWidth: 1,
+            priceLineVisible: false,
+            lastValueVisible: true,
+            priceScaleId: "rsi",
+          });
+          if (!isChartAlive(chart) || token !== updateTokenRef.current) {
+            safeRemoveSeries(chart, { current: rsi });
+            return;
+          }
+          rsi.setData(
+            calcRSI(clean).map((p) => ({
+              time: p.time as UTCTimestamp,
+              value: p.value,
+            }))
+          );
+          chart.priceScale("rsi").applyOptions({
+            autoScale: true,
+            scaleMargins: { top: 0.74, bottom: 0.04 },
+          });
+          rsiRef.current = rsi;
+          applyPaneMargins(chart, indicators);
+        }
+
         if (isChartAlive(chart) && token === updateTokenRef.current) {
+          const width = containerRef.current?.clientWidth ?? 800;
+          const layout = getTimeScaleLayout(
+            timeframeRef.current,
+            clean.length,
+            width
+          );
+          chart.timeScale().applyOptions(layout);
           chart.timeScale().fitContent();
         }
       } catch {
@@ -291,7 +378,13 @@ export function ChartContainer({
     mountedRef.current = true;
     updateTokenRef.current += 1;
 
-    const chart = createChart(el, getChartOptions(el.clientWidth, el.clientHeight));
+    const chart = createChart(
+      el,
+      getChartOptions(el.clientWidth, el.clientHeight, {
+        timezone: timezoneRef.current,
+        timeframe: timeframeRef.current,
+      })
+    );
     chartRef.current = chart;
 
     const crosshairHandler = (param: MouseEventParams<Time>) => {
@@ -308,8 +401,13 @@ export function ChartContainer({
       }
       const bar = barsRef.current.find((b) => b.time === t);
       if (bar) {
+        const realTime = resolveRealTime(
+          bar.time,
+          realTimeLookupRef.current
+        );
         onCrosshairRef.current({
           time: bar.time,
+          realTime,
           open: bar.open,
           high: bar.high,
           low: bar.low,
@@ -375,7 +473,19 @@ export function ChartContainer({
     return () => {
       updateTokenRef.current += 1;
     };
-  }, [bars, chartType, indicators, applyMainSeries]);
+  }, [bars, chartType, indicators, timeframe, applyMainSeries]);
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart || !mountedRef.current) return;
+    chart.applyOptions(
+      getChartOptions(
+        containerRef.current?.clientWidth ?? 800,
+        containerRef.current?.clientHeight ?? 400,
+        { timezone, timeframe }
+      )
+    );
+  }, [timeframe, timezone]);
 
   return (
     <div

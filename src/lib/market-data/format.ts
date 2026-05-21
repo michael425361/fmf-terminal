@@ -108,3 +108,19 @@ export function getFlashClass(
   const positive = quote.invertColors ? !wentUp : wentUp;
   return positive ? "quote-flash-up" : "quote-flash-down";
 }
+
+export function getPriceTickClass(
+  quote: MarketQuote,
+  previous: MarketQuote | undefined
+): string {
+  if (!previous || previous.price === quote.price) return "";
+  const wentUp = quote.price > previous.price;
+  const positive = quote.invertColors ? !wentUp : wentUp;
+  return positive ? "ticker-price-tick-up" : "ticker-price-tick-down";
+}
+
+export function getDirectionArrow(quote: MarketQuote): string {
+  if (quote.change > 0) return "▲";
+  if (quote.change < 0) return "▼";
+  return "—";
+}

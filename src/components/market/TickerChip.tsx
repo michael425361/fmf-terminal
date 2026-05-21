@@ -4,7 +4,9 @@ import { forwardRef, memo, useCallback, useState } from "react";
 import type { MarketQuote, MarketSymbolDefinition } from "@/lib/market-data/types";
 import {
   formatSignedPercent,
+  getDirectionArrow,
   getFlashClass,
+  getPriceTickClass,
   getQuoteColorClass,
 } from "@/lib/market-data/format";
 import { resolveMarketSession } from "@/lib/chart/market-session";
@@ -73,6 +75,8 @@ const TickerChipInner = forwardRef<HTMLButtonElement, TickerChipProps>(
 
     const pctClass = getQuoteColorClass(quote);
     const flashClass = getFlashClass(quote, previous);
+    const tickClass = getPriceTickClass(quote, previous);
+    const arrow = getDirectionArrow(quote);
     const session = resolveMarketSession(quote.marketState);
     const showLivePulse = isActive && session.isLive;
 
@@ -89,7 +93,7 @@ const TickerChipInner = forwardRef<HTMLButtonElement, TickerChipProps>(
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         className={cn(
-          "ticker-chip group relative flex min-w-[84px] shrink-0 flex-col justify-center border-r border-[var(--border)] px-2 py-1.5 text-left transition-all duration-200 lg:min-w-[118px] lg:px-3 lg:py-2.5",
+          "ticker-chip group relative flex min-w-[76px] shrink-0 flex-col justify-center border-r border-[var(--border)] px-1.5 py-1 text-left transition-colors duration-200 lg:min-w-[108px] lg:px-2.5 lg:py-2",
           "hover:bg-[var(--surface-card)] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-[-1px] focus-visible:outline-[var(--accent)]",
           isActive && "ticker-chip-active bg-[var(--surface-card)]",
           flashClass
@@ -114,10 +118,13 @@ const TickerChipInner = forwardRef<HTMLButtonElement, TickerChipProps>(
             </span>
             <span
               className={cn(
-                "font-mono text-[9px] tabular-nums lg:text-[10px]",
+                "font-mono text-[8px] tabular-nums leading-none lg:text-[9px]",
                 pctClass
               )}
             >
+              <span className="mr-0.5 opacity-90" aria-hidden>
+                {arrow}
+              </span>
               {formatSignedPercent(quote.changePercent)}
             </span>
           </div>
@@ -136,7 +143,8 @@ const TickerChipInner = forwardRef<HTMLButtonElement, TickerChipProps>(
           quote={quote}
           previous={previous}
           showChange={false}
-          className="[&>div:first-child]:text-[11px] [&>div:first-child]:leading-tight lg:[&>div:first-child]:text-sm"
+          tickClass={tickClass}
+          className="[&>div:first-child]:text-xs [&>div:first-child]:font-semibold [&>div:first-child]:leading-none lg:[&>div:first-child]:text-[13px]"
         />
 
         <TickerTooltip asset={asset} quote={quote} visible={hovered} />

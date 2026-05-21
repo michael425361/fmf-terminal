@@ -29,6 +29,10 @@ export interface SanitizeCandleOptions {
   wickBodyMoveMax?: number;
   /** Keep zero-volume intraday bars (HK/TW sessions). */
   allowZeroVolumeIntraday?: boolean;
+  /** Skip wick/spike rejection (HK/TW real ticks). */
+  skipSpikeFilter?: boolean;
+  /** Skip thin-volume range outlier filter. */
+  skipThinVolumeAnomaly?: boolean;
 }
 
 export interface SanitizeCandleResult {
@@ -264,23 +268,26 @@ export function sanitizeCandleBars(
     const prevClose = i > 0 ? deduped[i - 1].close : null;
     const medClose = median(neighborCloses(deduped, i));
 
-    const spike = detectWickSpike(
-      bar,
-      prevClose,
-      Number.isFinite(medClose) ? medClose : bar.close,
-      spikeOpts
-    );
-    if (spike) {
-      pushReject(rejected, options, {
-        reason: spike,
-        message: `Anomalous wick or spike at time ${bar.time}`,
+    if (!options.skipSpikeFilter) {
+      const spike = detectWickSpike(
         bar,
-        time: bar.time,
-      });
-      continue;
+        prevClose,
+        Number.isFinite(medClose) ? medClose : bar.close,
+        spikeOpts
+      );
+      if (spike) {
+        pushReject(rejected, options, {
+          reason: spike,
+          message: `Anomalous wick or spike at time ${bar.time}`,
+          bar,
+          time: bar.time,
+        });
+        continue;
+      }
     }
 
     if (
+      !options.skipThinVolumeAnomaly &&
       options.timeframe &&
       INTRADAY_TIMEFRAMES.has(options.timeframe) &&
       isThinVolumeAnomaly(bar, medianVol, medianRange)
