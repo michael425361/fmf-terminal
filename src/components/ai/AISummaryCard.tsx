@@ -1,8 +1,8 @@
 "use client";
 
 import { Loader2, RefreshCw } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
-import { useAIMarketSummary } from "@/hooks/useAIMarketSummary";
+import { useTranslations } from "next-intl";
+import { useAIMarketSummary, useAISummaryLocale } from "@/hooks/useAIMarketSummary";
 import { formatRelativeTime } from "@/lib/news/relative-time";
 import type { OHLCVBar } from "@/lib/chart/types";
 import { formatSignedPercent, getQuoteColorClass } from "@/lib/market-data/format";
@@ -51,7 +51,7 @@ function SentimentBadge({
   return (
     <span
       className={cn(
-        "ai-sentiment-badge inline-flex items-center gap-1.5 rounded border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider",
+        "ai-sentiment-badge inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-[10px] font-semibold",
         style.badge
       )}
     >
@@ -61,11 +61,18 @@ function SentimentBadge({
   );
 }
 
-function HighlightPill({ text }: { text: string }) {
+function HighlightPill({ text, isZh }: { text: string; isZh: boolean }) {
   const label = text.trim();
   if (!label) return null;
   return (
-    <span className="ai-brief-pill font-mono text-[10px] uppercase tracking-wide text-[var(--foreground)]/85">
+    <span
+      className={cn(
+        "ai-brief-pill text-[10px] text-[var(--foreground)]/85",
+        isZh
+          ? "font-sans tracking-normal normal-case"
+          : "font-mono uppercase tracking-wide"
+      )}
+    >
       {label}
     </span>
   );
@@ -95,7 +102,8 @@ export function AISummaryCard({
   className,
 }: AISummaryCardProps) {
   const t = useTranslations("aiSummary");
-  const locale = useLocale();
+  const uiLocale = useAISummaryLocale();
+  const isZh = uiLocale === "zh";
 
   const { data, loading, refresh, canRefresh, cooldownSeconds } =
     useAIMarketSummary({
@@ -112,7 +120,7 @@ export function AISummaryCard({
   const sentimentLabel = t(`sentimentValues.${sentiment}`);
   const generatedLabel =
     data?.generatedAt && hasSummary
-      ? formatRelativeTime(new Date(data.generatedAt).toISOString(), locale)
+      ? formatRelativeTime(new Date(data.generatedAt).toISOString(), uiLocale)
       : null;
 
   const showLoading = loading && !hasSummary;
@@ -210,14 +218,19 @@ export function AISummaryCard({
               )}
             </div>
 
-            <p className="min-w-0 break-words text-xs leading-[1.65] text-[var(--foreground)]/92">
+            <p
+              className={cn(
+                "min-w-0 break-words text-xs leading-[1.65] text-[var(--foreground)]/92",
+                isZh && "leading-[1.75] tracking-normal"
+              )}
+            >
               {data?.summary}
             </p>
 
             {data?.highlights && data.highlights.length > 0 && (
               <div className="flex min-w-0 flex-wrap gap-1.5 border-t border-[var(--border)]/50 pt-3">
                 {data.highlights.map((line, i) => (
-                  <HighlightPill key={`${line}-${i}`} text={line} />
+                  <HighlightPill key={`${line}-${i}`} text={line} isZh={isZh} />
                 ))}
               </div>
             )}

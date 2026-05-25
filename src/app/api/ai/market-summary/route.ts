@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateMarketSummary } from "@/lib/ai/openai-market-summary";
+import { getOpenAIConfig } from "@/lib/ai/openai-config";
 import {
   getCachedMarketSummary,
   marketSummaryCacheKey,
@@ -9,6 +10,10 @@ import type {
   MarketSummaryRequest,
   MarketSummaryResponse,
 } from "@/lib/ai/types";
+import {
+  resolveAISummaryLocale,
+  type AISummaryLocale,
+} from "@/lib/ai/locale";
 import { detectMarketFromSymbol } from "@/lib/market-data/symbol-normalize";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +37,14 @@ export async function POST(request: Request) {
     request.headers.get("x-skip-cache") === "1" ||
     new URL(request.url).searchParams.get("refresh") === "1";
 
+  const openaiCfg = getOpenAIConfig();
+
+  if (process.env.NODE_ENV === "development") {
+    console.log("[ai/market-summary] OPENAI_API_KEY prefix:", openaiCfg.keyPrefix);
+    console.log("[ai/market-summary] model:", openaiCfg.model);
+    console.log("[ai/market-summary] configured:", openaiCfg.isConfigured);
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -49,16 +62,45 @@ export async function POST(request: Request) {
       ? body.market
       : detectMarketFromSymbol(symbol);
 
+  const locale: AISummaryLocale = resolveAISummaryLocale({
+    bodyLocale: body.locale,
+    headerLocale:
+      request.headers.get("x-fmf-locale") ??
+      request.headers.get("x-next-intl-locale"),
+    acceptLanguage: request.headers.get("accept-language"),
+  });
+
   const payload: MarketSummaryRequest = {
     symbol,
     market,
-    locale: body.locale === "zh" ? "zh" : "en",
+    locale,
     quote: body.quote ?? null,
     candles: Array.isArray(body.candles) ? body.candles : [],
     indicators: body.indicators,
   };
 
-  const cacheKey = marketSummaryCacheKey(symbol, market);
+  if (process.env.NODE_ENV === "development") {
+    console.log("[ai/market-summary] request body:", {
+      symbol: payload.symbol,
+      market: payload.market,
+      locale: payload.locale,
+      bodyLocale: body.locale,
+      headerLocale: request.headers.get("x-fmf-locale"),
+      candleCount: payload.candles?.length ?? 0,
+      hasQuote: Boolean(payload.quote),
+      hasIndicators: Boolean(payload.indicators),
+      skipCache,
+    });
+  }
+
+  if (!openaiCfg.isConfigured) {
+    console.error(
+      "[ai/market-summary] OPENAI_API_KEY missing — add to .env.local and restart dev server"
+    );
+    return NextResponse.json(UNAVAILABLE, { status: 200 });
+  }
+
+  const cacheKey = marketSummaryCacheKey(symbol, market, locale);
 
   if (!skipCache) {
     const cached = getCachedMarketSummary(cacheKey);
@@ -71,23 +113,16 @@ export async function POST(request: Request) {
 
   try {
     const result = await generateMarketSummary(payload);
-    setCachedMarketSummary(cacheKey, result);
-    return NextResponse.json(result, {
+    setCachedMarketSummary(cacheKey, { ...result, locale });
+    return NextResponse.json({ ...result, locale }, {
       headers: { "Cache-Control": "private, max-age=300" },
     });
   } catch (err) {
-    if (process.env.NODE_ENV === "development") {
-      console.error("[ai/market-summary]", err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[ai/market-summary] error:", message);
+    if (err instanceof Error && err.stack) {
+      console.error("[ai/market-summary] stack:", err.stack);
     }
-    return NextResponse.json(
-      {
-        ...UNAVAILABLE,
-        message:
-          err instanceof Error && err.message.includes("OPENAI_API_KEY")
-            ? "AI summary temporarily unavailable"
-            : UNAVAILABLE.message,
-      },
-      { status: 200 }
-    );
+    return NextResponse.json(UNAVAILABLE, { status: 200 });
   }
 }

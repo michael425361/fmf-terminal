@@ -1,8 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { usePathname } from "@/i18n/navigation";
 import { buildIndicatorsFromCandles, slimCandles } from "@/lib/ai/market-context";
+import {
+  localeFromPathname,
+  normalizeAISummaryLocale,
+  type AISummaryLocale,
+} from "@/lib/ai/locale";
 import type { MarketSummaryResponse } from "@/lib/ai/types";
 import type { OHLCVBar } from "@/lib/chart/types";
 import type { MarketQuote } from "@/lib/market-data/types";
@@ -36,6 +42,19 @@ function quoteToInputFixed(quote: MarketQuote | undefined) {
   };
 }
 
+/** Prefer next-intl locale; fall back to URL pathname segment. */
+export function useAISummaryLocale(): AISummaryLocale {
+  const intlLocale = useLocale();
+  const pathname = usePathname();
+
+  return useMemo(() => {
+    const fromIntl = normalizeAISummaryLocale(intlLocale);
+    if (fromIntl === "zh") return "zh";
+    const fromPath = localeFromPathname(pathname ?? "");
+    return fromPath === "zh" ? "zh" : fromIntl;
+  }, [intlLocale, pathname]);
+}
+
 export function useAIMarketSummary({
   symbol,
   market,
@@ -43,7 +62,8 @@ export function useAIMarketSummary({
   candles,
   enabled = true,
 }: UseAIMarketSummaryOptions) {
-  const locale = useLocale();
+  const locale = useAISummaryLocale();
+  const t = useTranslations("aiSummary");
   const [data, setData] = useState<MarketSummaryResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState(0);
@@ -54,9 +74,11 @@ export function useAIMarketSummary({
   const inFlightKeyRef = useRef<string | null>(null);
   const quoteRef = useRef(quote);
   const candlesRef = useRef(candles);
+  const localeRef = useRef(locale);
 
   quoteRef.current = quote;
   candlesRef.current = candles;
+  localeRef.current = locale;
 
   const candleFingerprint = useMemo(() => {
     if (candles.length < 2) return "";
@@ -90,7 +112,7 @@ export function useAIMarketSummary({
     abortRef.current?.abort();
     inFlightKeyRef.current = null;
     requestIdRef.current += 1;
-  }, [symbol, market]);
+  }, [symbol, market, locale]);
 
   const fetchSummary = useCallback(
     async (refresh = false) => {
@@ -100,7 +122,8 @@ export function useAIMarketSummary({
         return;
       }
 
-      const flightKey = `${symbol}|${market}|${refresh ? "r" : "a"}`;
+      const activeLocale = localeRef.current;
+      const flightKey = `${symbol}|${market}|${activeLocale}|${refresh ? "r" : "a"}`;
       if (inFlightKeyRef.current === flightKey) return;
 
       abortRef.current?.abort();
@@ -120,13 +143,15 @@ export function useAIMarketSummary({
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "X-FMF-Locale": activeLocale,
+              "Accept-Language": activeLocale === "zh" ? "zh-CN,zh" : "en",
               ...(refresh ? { "X-Skip-Cache": "1" } : {}),
             },
             signal: controller.signal,
             body: JSON.stringify({
               symbol,
               market,
-              locale,
+              locale: activeLocale,
               quote: quoteToInputFixed(quoteRef.current),
               candles: slimCandles(bars, 60),
               indicators,
@@ -149,7 +174,7 @@ export function useAIMarketSummary({
           sentiment: "neutral",
           highlights: [],
           unavailable: true,
-          message: "AI summary temporarily unavailable",
+          message: t("unavailable"),
         });
       } finally {
         if (inFlightKeyRef.current === flightKey) {
@@ -160,7 +185,7 @@ export function useAIMarketSummary({
         }
       }
     },
-    [symbol, market, locale, enabled]
+    [symbol, market, enabled, t]
   );
 
   useEffect(() => {
@@ -183,6 +208,7 @@ export function useAIMarketSummary({
     data,
     loading,
     refresh,
+    locale,
     canRefresh: Boolean(symbol) && cooldownSeconds === 0 && !loading,
     cooldownSeconds,
   };

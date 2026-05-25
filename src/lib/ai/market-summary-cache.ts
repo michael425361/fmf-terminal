@@ -9,8 +9,12 @@ interface CacheEntry {
 
 const cache = new Map<string, CacheEntry>();
 
-export function marketSummaryCacheKey(symbol: string, market: string): string {
-  return `${symbol.toUpperCase()}|${market}`;
+export function marketSummaryCacheKey(
+  symbol: string,
+  market: string,
+  locale: string
+): string {
+  return `${symbol.toUpperCase()}|${market}|${locale}`;
 }
 
 export function getCachedMarketSummary(

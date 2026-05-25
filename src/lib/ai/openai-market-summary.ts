@@ -1,14 +1,15 @@
+import OpenAI from "openai";
+import { normalizeAISummaryLocale, type AISummaryLocale } from "./locale";
 import {
   buildMarketSummaryUserPrompt,
-  MARKET_SUMMARY_SYSTEM_PROMPT,
+  getMarketSummarySystemPrompt,
 } from "./market-summary-prompt";
+import { assertOpenAIConfigured, getOpenAIConfig } from "./openai-config";
 import type {
   MarketSummaryRequest,
   MarketSummaryResponse,
   MarketSummarySentiment,
 } from "./types";
-
-const DEFAULT_MODEL = "gpt-4o-mini";
 
 function parseSentiment(raw: unknown): MarketSummarySentiment {
   if (raw === "bullish" || raw === "bearish" || raw === "neutral") {
@@ -50,47 +51,54 @@ function parseModelJson(content: string): MarketSummaryResponse | null {
 export async function generateMarketSummary(
   input: MarketSummaryRequest
 ): Promise<MarketSummaryResponse> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY not configured");
-  }
+  const apiKey = assertOpenAIConfigured();
+  const { model } = getOpenAIConfig();
+  const locale: AISummaryLocale = normalizeAISummaryLocale(input.locale);
 
-  const model = process.env.OPENAI_MODEL?.trim() || DEFAULT_MODEL;
+  const client = new OpenAI({ apiKey });
 
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+  let completion;
+  try {
+    completion = await client.chat.completions.create({
       model,
       temperature: 0.3,
       max_tokens: 560,
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: MARKET_SUMMARY_SYSTEM_PROMPT },
-        { role: "user", content: buildMarketSummaryUserPrompt(input) },
+        { role: "system", content: getMarketSummarySystemPrompt(locale) },
+        { role: "user", content: buildMarketSummaryUserPrompt({ ...input, locale }) },
       ],
-    }),
-  });
+    });
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : typeof err === "object" && err !== null && "message" in err
+          ? String((err as { message: unknown }).message)
+          : "Unknown OpenAI error";
+    throw new Error(`OpenAI request failed: ${message}`);
+  }
 
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "");
+  const content = completion.choices[0]?.message?.content?.trim();
+  if (!content) {
+    throw new Error("OpenAI returned empty content");
+  }
+
+  if (process.env.NODE_ENV === "development") {
+    console.log("[ai/market-summary] OpenAI ok:", {
+      model,
+      locale,
+      finishReason: completion.choices[0]?.finish_reason,
+      contentLength: content.length,
+    });
+  }
+
+  const parsed = parseModelJson(content);
+  if (!parsed) {
     throw new Error(
-      `OpenAI ${res.status}: ${errText.slice(0, 200) || res.statusText}`
+      `Failed to parse OpenAI JSON response: ${content.slice(0, 120)}`
     );
   }
 
-  const json = (await res.json()) as {
-    choices?: { message?: { content?: string } }[];
-  };
-
-  const content = json.choices?.[0]?.message?.content?.trim();
-  if (!content) throw new Error("OpenAI returned empty content");
-
-  const parsed = parseModelJson(content);
-  if (!parsed) throw new Error("Failed to parse OpenAI JSON response");
-
-  return parsed;
+  return { ...parsed, locale };
 }

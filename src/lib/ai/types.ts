@@ -1,5 +1,6 @@
 import type { DetectedMarket } from "@/lib/market-data/symbol-normalize";
 import type { OHLCVBar } from "@/lib/chart/types";
+import type { AISummaryLocale } from "./locale";
 
 export type MarketSummarySentiment = "bullish" | "bearish" | "neutral";
 
@@ -32,7 +33,7 @@ export interface MarketSummaryIndicators {
 export interface MarketSummaryRequest {
   symbol: string;
   market: DetectedMarket;
-  locale?: string;
+  locale?: AISummaryLocale;
   quote?: MarketSummaryQuoteInput | null;
   candles?: OHLCVBar[];
   indicators?: MarketSummaryIndicators;
@@ -42,6 +43,7 @@ export interface MarketSummaryResponse {
   summary: string;
   sentiment: MarketSummarySentiment;
   highlights: string[];
+  locale?: AISummaryLocale;
   cached?: boolean;
   generatedAt?: number;
   unavailable?: boolean;

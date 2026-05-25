@@ -438,7 +438,8 @@
       "bearish": "Bearish",
       "neutral": "Neutral"
     },
-    "disclaimer": "Generated from market price action and technical indicators."
+    "disclaimer": "Generated from market price action and technical indicators.",
+    "localeNote": "English brief"
   },
   "calendar": {
     "title": "Economic Calendar",

@@ -438,7 +438,8 @@
       "bearish": "偏空",
       "neutral": "中性"
     },
-    "disclaimer": "内容由市场价格走势与技术指标生成。"
+    "disclaimer": "内容由市场价格走势与技术指标生成。",
+    "localeNote": "中文简报"
   },
   "calendar": {
     "title": "经济日历",
