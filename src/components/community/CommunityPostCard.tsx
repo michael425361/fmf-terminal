@@ -26,6 +26,7 @@ interface CommunityPostCardProps {
     body: string,
     parentId: string | null
   ) => Promise<void>;
+  onLikeComment: (commentId: string) => void;
   onLikeToggle: (postId: string) => void;
   onBookmarkToggle: (postId: string) => void;
   onRequireAuth: () => boolean;
@@ -38,6 +39,7 @@ export function CommunityPostCard({
   comments,
   commentsLoading = false,
   onAddComment,
+  onLikeComment,
   onLikeToggle,
   onBookmarkToggle,
   onRequireAuth,
@@ -198,6 +200,7 @@ export function CommunityPostCard({
               comments={comments}
               loading={commentsLoading}
               onAddComment={onAddComment}
+              onLikeComment={onLikeComment}
               onRequireAuth={onRequireAuth}
             />
           )}

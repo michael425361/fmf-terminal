@@ -187,8 +187,12 @@
       "cancel": "Cancel",
       "empty": "No comments yet — start the discussion",
       "posted": "Comment posted",
+      "replyPosted": "Reply posted",
       "postFailed": "Could not post comment. Try again.",
-      "loadFailed": "Could not load comments."
+      "loadFailed": "Could not load comments.",
+      "like": "Like comment",
+      "unlike": "Unlike comment",
+      "likeFailed": "Could not update comment like. Try again."
     }
   },
   "news": {

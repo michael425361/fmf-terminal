@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { initialsFromName } from "@/lib/auth/profile";
 import type { UserProfile } from "@/lib/auth/profile";
 import { createClient } from "@/lib/supabase/client";
+import { fetchCommentLikeMeta } from "./comment-likes";
 import type { CommentsByPostId, CommunityComment } from "./types";
 
 export interface CommentRow {
@@ -9,12 +10,14 @@ export interface CommentRow {
   post_id: string;
   user_id: string;
   content: string;
+  parent_id: string | null;
   created_at: string;
 }
 
 type ProfileSnippet = { username: string; avatar_url: string | null };
 
-const COMMENT_COLUMNS = "id, post_id, user_id, content, created_at";
+const COMMENT_COLUMNS =
+  "id, post_id, user_id, content, parent_id, created_at";
 
 function hashHue(input: string): number {
   let h = 0;
@@ -27,13 +30,14 @@ function hashHue(input: string): number {
 
 function rowToComment(
   row: CommentRow,
-  profile?: ProfileSnippet | null
+  profile?: ProfileSnippet | null,
+  likeMeta?: { likes: number; likedByMe: boolean }
 ): CommunityComment {
   const username = profile?.username ?? "FMF_User";
   return {
     id: row.id,
     postId: row.post_id,
-    parentId: null,
+    parentId: row.parent_id ?? null,
     userId: row.user_id,
     username,
     avatarInitials: initialsFromName(username),
@@ -41,7 +45,8 @@ function rowToComment(
     avatarUrl: profile?.avatar_url ?? null,
     publishedAt: row.created_at,
     body: row.content,
-    likes: 0,
+    likes: likeMeta?.likes ?? 0,
+    likedByMe: likeMeta?.likedByMe ?? false,
   };
 }
 
@@ -75,16 +80,34 @@ async function fetchProfileMap(
 
 async function enrichComments(
   rows: CommentRow[],
-  client: SupabaseClient
+  client: SupabaseClient,
+  currentUserId?: string | null
 ): Promise<CommunityComment[]> {
   const userIds = [...new Set(rows.map((r) => r.user_id))];
   const profiles = await fetchProfileMap(userIds, client);
-  return rows.map((row) => rowToComment(row, profiles[row.user_id]));
+
+  const commentIds = rows.map((r) => r.id);
+  let likeMeta = { counts: {} as Record<string, number>, likedByMe: {} as Record<string, boolean> };
+  try {
+    likeMeta = await fetchCommentLikeMeta(commentIds, currentUserId, client);
+  } catch (err) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[community] comment likes load failed:", err);
+    }
+  }
+
+  return rows.map((row) =>
+    rowToComment(row, profiles[row.user_id], {
+      likes: likeMeta.counts[row.id] ?? 0,
+      likedByMe: likeMeta.likedByMe[row.id] ?? false,
+    })
+  );
 }
 
 export async function getComments(
   postId: string,
-  client?: SupabaseClient
+  client?: SupabaseClient,
+  currentUserId?: string | null
 ): Promise<CommunityComment[]> {
   const supabase = client ?? createClient();
   const { data, error } = await supabase
@@ -94,13 +117,14 @@ export async function getComments(
     .order("created_at", { ascending: true });
 
   if (error) throw new Error(error.message);
-  return enrichComments((data ?? []) as CommentRow[], supabase);
+  return enrichComments((data ?? []) as CommentRow[], supabase, currentUserId);
 }
 
 /** Batch-load comments for many posts (avoids N+1). */
 export async function getCommentsForPosts(
   postIds: string[],
-  client?: SupabaseClient
+  client?: SupabaseClient,
+  currentUserId?: string | null
 ): Promise<CommentsByPostId> {
   if (postIds.length === 0) return {};
 
@@ -114,7 +138,7 @@ export async function getCommentsForPosts(
   if (error) throw new Error(error.message);
 
   const rows = (data ?? []) as CommentRow[];
-  const enriched = await enrichComments(rows, supabase);
+  const enriched = await enrichComments(rows, supabase, currentUserId);
 
   const map: CommentsByPostId = {};
   for (const id of postIds) map[id] = [];
@@ -132,16 +156,38 @@ export async function createComment(
   postId: string,
   content: string,
   author: UserProfile,
+  parentId: string | null = null,
   client?: SupabaseClient
 ): Promise<CommunityComment> {
   const supabase = client ?? createClient();
+
+  const payload: {
+    post_id: string;
+    user_id: string;
+    content: string;
+    parent_id?: string;
+  } = {
+    post_id: postId,
+    user_id: author.id,
+    content: content.trim(),
+  };
+
+  if (parentId) {
+    payload.parent_id = parentId;
+  }
+
+  if (process.env.NODE_ENV === "development") {
+    console.log("Reply submit:", {
+      postId,
+      parentId: parentId ?? null,
+      currentUser: author.id,
+      content: payload.content,
+    });
+  }
+
   const { data, error } = await supabase
     .from("comments")
-    .insert({
-      post_id: postId,
-      user_id: author.id,
-      content: content.trim(),
-    })
+    .insert(payload)
     .select(COMMENT_COLUMNS)
     .single();
 

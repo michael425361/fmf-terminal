@@ -16,6 +16,7 @@ interface CommentItemProps {
   replies?: CommunityComment[];
   depth?: number;
   onReply: (parentId: string, body: string) => Promise<void>;
+  onLike: (commentId: string) => void;
   onRequireAuth: () => boolean;
 }
 
@@ -24,6 +25,7 @@ export function CommentItem({
   replies = [],
   depth = 0,
   onReply,
+  onLike,
   onRequireAuth,
 }: CommentItemProps) {
   const t = useTranslations("community.comments");
@@ -33,6 +35,7 @@ export function CommentItem({
 
   const timeLabel = formatRelativeTime(comment.publishedAt, locale);
   const hasReplies = replies.length > 0;
+  const liked = comment.likedByMe ?? false;
 
   return (
     <div
@@ -61,10 +64,27 @@ export function CommentItem({
             <CommentBody body={comment.body} />
           </div>
           <div className="mt-2 flex items-center gap-3">
-            <span className="inline-flex items-center gap-1 font-mono text-[9px] text-[var(--muted)]">
-              <Heart className="h-3 w-3" />
+            <button
+              type="button"
+              onClick={() => {
+                if (!onRequireAuth()) return;
+                onLike(comment.id);
+              }}
+              aria-pressed={liked}
+              aria-label={liked ? t("unlike") : t("like")}
+              className={cn(
+                "inline-flex items-center gap-1 rounded font-mono text-[9px] transition",
+                liked
+                  ? "text-[var(--negative)]"
+                  : "text-[var(--muted)] hover:text-[var(--negative)]"
+              )}
+            >
+              <Heart
+                className="h-3 w-3"
+                fill={liked ? "currentColor" : "none"}
+              />
               {formatCount(comment.likes)}
-            </span>
+            </button>
             <button
               type="button"
               onClick={() => {
@@ -123,6 +143,7 @@ export function CommentItem({
                   comment={reply}
                   depth={depth + 1}
                   onReply={onReply}
+                  onLike={onLike}
                   onRequireAuth={onRequireAuth}
                 />
               ))}

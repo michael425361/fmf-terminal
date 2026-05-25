@@ -17,6 +17,7 @@ import {
   getCommentsForPosts,
 } from "@/lib/community/comments";
 import { bookmarkPost, unbookmarkPost } from "@/lib/community/bookmarks";
+import { likeComment, unlikeComment } from "@/lib/community/comment-likes";
 import { likePost, unlikePost } from "@/lib/community/likes";
 import {
   applyPostInteractionMeta,
@@ -71,7 +72,11 @@ export function CommunityPage() {
     async (postIds: string[], gen: number) => {
       if (postIds.length === 0) return;
       try {
-        const map = await getCommentsForPosts(postIds);
+        const map = await getCommentsForPosts(
+          postIds,
+          undefined,
+          profileIdRef.current
+        );
         if (loadGenRef.current !== gen) return;
         setCommentsByPost(map);
       } catch (err) {
@@ -147,7 +152,11 @@ export function CommunityPage() {
       if (postIds.length === 0) return;
       setCommentsLoading(true);
       try {
-        const map = await getCommentsForPosts(postIds);
+        const map = await getCommentsForPosts(
+          postIds,
+          undefined,
+          profile?.id ?? null
+        );
         setCommentsByPost((prev) => ({ ...prev, ...map }));
       } catch {
         showToast(t("comments.loadFailed"), "error");
@@ -155,7 +164,7 @@ export function CommunityPage() {
         setCommentsLoading(false);
       }
     },
-    [showToast, t]
+    [profile?.id, showToast, t]
   );
 
   const patchPostFromServer = useCallback(
@@ -176,10 +185,21 @@ export function CommunityPage() {
   );
 
   const handleAddComment = useCallback(
-    async (postId: string, body: string, _parentId: string | null) => {
+    async (postId: string, body: string, parentId: string | null) => {
       if (!profile) return;
+
+      if (process.env.NODE_ENV === "development") {
+        console.log("Reply submit:", {
+          postId,
+          parentId,
+          currentUser: profile.id,
+          content: body,
+        });
+      }
+
       const pending = buildOptimisticComment(postId, body, profile, {
         pending: true,
+        parentId,
       });
       setCommentsByPost((prev) => ({
         ...prev,
@@ -192,15 +212,23 @@ export function CommunityPage() {
       );
 
       try {
-        const created = await createComment(postId, body, profile);
+        const created = await createComment(
+          postId,
+          body,
+          profile,
+          parentId
+        );
         setCommentsByPost((prev) => ({
           ...prev,
           [postId]: (prev[postId] ?? [])
             .filter((c) => c.id !== pending.id)
             .concat(created),
         }));
+        void refreshComments([postId]);
         void patchPostFromServer(postId, {});
-        showPageToast(t("comments.posted"));
+        showPageToast(
+          parentId ? t("comments.replyPosted") : t("comments.posted")
+        );
       } catch {
         setCommentsByPost((prev) => ({
           ...prev,
@@ -216,7 +244,70 @@ export function CommunityPage() {
         showToast(t("comments.postFailed"), "error");
       }
     },
-    [profile, patchPostFromServer, showPageToast, showToast, t]
+    [profile, patchPostFromServer, refreshComments, showPageToast, showToast, t]
+  );
+
+  const handleCommentLikeToggle = useCallback(
+    (postId: string, commentId: string) => {
+      if (!profile || !requireAuth("comment")) return;
+
+      if (process.env.NODE_ENV === "development") {
+        console.log("Like clicked:", {
+          commentId,
+          currentUser: profile.id,
+        });
+      }
+
+      let wasLiked = false;
+      let nextLiked = false;
+
+      setCommentsByPost((prev) => {
+        const list = prev[postId] ?? [];
+        const target = list.find((c) => c.id === commentId);
+        if (!target) return prev;
+        wasLiked = target.likedByMe ?? false;
+        nextLiked = !wasLiked;
+        const delta = nextLiked ? 1 : -1;
+        return {
+          ...prev,
+          [postId]: list.map((c) =>
+            c.id === commentId
+              ? {
+                  ...c,
+                  likedByMe: nextLiked,
+                  likes: Math.max(0, c.likes + delta),
+                }
+              : c
+          ),
+        };
+      });
+
+      void (async () => {
+        try {
+          if (nextLiked) await likeComment(commentId, profile.id);
+          else await unlikeComment(commentId, profile.id);
+        } catch {
+          setCommentsByPost((prev) => {
+            const list = prev[postId] ?? [];
+            const delta = nextLiked ? 1 : -1;
+            return {
+              ...prev,
+              [postId]: list.map((c) =>
+                c.id === commentId
+                  ? {
+                      ...c,
+                      likedByMe: wasLiked,
+                      likes: Math.max(0, c.likes - delta),
+                    }
+                  : c
+              ),
+            };
+          });
+          showToast(t("comments.likeFailed"), "error");
+        }
+      })();
+    },
+    [profile, requireAuth, showToast, t]
   );
 
   const handleLikeToggle = useCallback(
@@ -450,6 +541,9 @@ export function CommunityPage() {
                   comments={getCommentsForPost(commentsByPost, post.id)}
                   commentsLoading={commentsLoading}
                   onAddComment={handleAddComment}
+                  onLikeComment={(commentId) =>
+                    handleCommentLikeToggle(post.id, commentId)
+                  }
                   onLikeToggle={handleLikeToggle}
                   onBookmarkToggle={handleBookmarkToggle}
                   onRequireAuth={() => requireAuth("comment")}

@@ -16,6 +16,7 @@ interface PostCommentsSectionProps {
     body: string,
     parentId: string | null
   ) => Promise<void>;
+  onLikeComment: (commentId: string) => void;
   onRequireAuth: () => boolean;
 }
 
@@ -24,6 +25,7 @@ export function PostCommentsSection({
   comments,
   loading = false,
   onAddComment,
+  onLikeComment,
   onRequireAuth,
 }: PostCommentsSectionProps) {
   const t = useTranslations("community.comments");
@@ -45,6 +47,7 @@ export function PostCommentsSection({
               comment={comment}
               replies={replies}
               onReply={(parentId, body) => onAddComment(postId, body, parentId)}
+              onLike={onLikeComment}
               onRequireAuth={onRequireAuth}
             />
           ))

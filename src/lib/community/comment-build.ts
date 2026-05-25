@@ -5,12 +5,12 @@ export function buildOptimisticComment(
   postId: string,
   body: string,
   author: UserProfile,
-  options: { pending?: boolean } = {}
+  options: { pending?: boolean; parentId?: string | null } = {}
 ): CommunityComment {
   return {
     id: `cmt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     postId,
-    parentId: null,
+    parentId: options.parentId ?? null,
     userId: author.id,
     username: author.username,
     avatarInitials: author.avatarInitials,
@@ -19,6 +19,7 @@ export function buildOptimisticComment(
     publishedAt: new Date().toISOString(),
     body: body.trim(),
     likes: 0,
+    likedByMe: false,
     isPending: options.pending,
     isLocal: true,
   };

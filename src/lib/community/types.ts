@@ -47,6 +47,7 @@ export interface CommunityComment {
   publishedAt: string;
   body: string;
   likes: number;
+  likedByMe?: boolean;
   isPending?: boolean;
   isLocal?: boolean;
 }
