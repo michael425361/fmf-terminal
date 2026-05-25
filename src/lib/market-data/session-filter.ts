@@ -1,13 +1,11 @@
 import type { ChartTimeframe, OHLCVBar } from "@/lib/chart/types";
-import { isIntradayTimeframe } from "@/lib/chart/timeframes";
+import { resolveTimeframeResolution } from "@/lib/chart/timeframe-resolution";
 import type { DetectedMarket } from "./symbol-normalize";
-
-const MARKET_TIMEZONE: Record<"us" | "hk" | "tw" | "cn", string> = {
-  us: "America/New_York",
-  hk: "Asia/Hong_Kong",
-  tw: "Asia/Taipei",
-  cn: "Asia/Shanghai",
-};
+import {
+  getChartMarketConfig,
+  parseSessionMinutes,
+  type SessionWindow,
+} from "@/lib/chart/market-config";
 
 interface LocalClock {
   weekday: number;
@@ -15,13 +13,14 @@ interface LocalClock {
   minute: number;
 }
 
-function getLocalClock(unixSec: number, timeZone: string): LocalClock {
-  const parts = new Intl.DateTimeFormat("en-US", {
+/** Exchange-local wall clock from a UTC unix timestamp. */
+export function getLocalClock(unixSec: number, timeZone: string): LocalClock {
+  const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone,
     weekday: "short",
-    hour: "numeric",
-    minute: "numeric",
-    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
   }).formatToParts(new Date(unixSec * 1000));
 
   const weekdayStr = parts.find((p) => p.type === "weekday")?.value ?? "Mon";
@@ -40,7 +39,7 @@ function getLocalClock(unixSec: number, timeZone: string): LocalClock {
 
   return {
     weekday: weekdayMap[weekdayStr] ?? 1,
-    hour,
+    hour: hour === 24 ? 0 : hour,
     minute,
   };
 }
@@ -53,75 +52,48 @@ function isWeekend(clock: LocalClock): boolean {
   return clock.weekday === 0 || clock.weekday === 6;
 }
 
-function isHKRegularSession(clock: LocalClock): boolean {
-  if (isWeekend(clock)) return false;
+function isInSessionWindow(
+  clock: LocalClock,
+  sessions: SessionWindow[]
+): boolean {
+  if (isWeekend(clock) || sessions.length === 0) return false;
   const m = minutesSinceMidnight(clock.hour, clock.minute);
-  const morning = m >= 9 * 60 + 30 && m < 12 * 60;
-  const afternoon = m >= 13 * 60 && m <= 16 * 60;
-  return morning || afternoon;
-}
-
-function isTWRegularSession(clock: LocalClock): boolean {
-  if (isWeekend(clock)) return false;
-  const m = minutesSinceMidnight(clock.hour, clock.minute);
-  const morning = m >= 9 * 60 && m < 13 * 60 + 30;
-  const afternoon = m >= 14 * 60 && m <= 15 * 60 + 30;
-  return morning || afternoon;
-}
-
-function isUSRegularSession(clock: LocalClock): boolean {
-  if (isWeekend(clock)) return false;
-  const m = minutesSinceMidnight(clock.hour, clock.minute);
-  return m >= 9 * 60 + 30 && m < 16 * 60;
-}
-
-function isCNRegularSession(clock: LocalClock): boolean {
-  if (isWeekend(clock)) return false;
-  const m = minutesSinceMidnight(clock.hour, clock.minute);
-  const morning = m >= 9 * 60 + 30 && m < 11 * 60 + 30;
-  const afternoon = m >= 13 * 60 && m <= 15 * 60;
-  return morning || afternoon;
+  return sessions.some((s) => {
+    const start = parseSessionMinutes(s.start);
+    const end = parseSessionMinutes(s.end);
+    return m >= start && m <= end;
+  });
 }
 
 function isInRegularSession(
   unixSec: number,
-  market: "us" | "hk" | "tw" | "cn"
+  market: DetectedMarket
 ): boolean {
-  const tz = MARKET_TIMEZONE[market];
-  const clock = getLocalClock(unixSec, tz);
-  switch (market) {
-    case "hk":
-      return isHKRegularSession(clock);
-    case "tw":
-      return isTWRegularSession(clock);
-    case "us":
-      return isUSRegularSession(clock);
-    case "cn":
-      return isCNRegularSession(clock);
-    default:
-      return false;
+  const cfg = getChartMarketConfig(market);
+  if (!cfg.filterIntradaySession || cfg.sessions.length === 0) {
+    return true;
   }
+  if (market === "crypto") return true;
+  const clock = getLocalClock(unixSec, cfg.timezone);
+  return isInSessionWindow(clock, cfg.sessions);
 }
 
 /**
  * Keep only regular-session intraday bars (exchange-local clocks).
- * Excludes lunch breaks and off-hours; preserves monotonic UTC timestamps.
+ * HK: 09:30–12:00, 13:00–16:00. Preserves real UTC timestamps for the chart axis.
  */
 export function filterSessionBars(
   bars: OHLCVBar[],
   market: DetectedMarket,
   timeframe: ChartTimeframe
 ): OHLCVBar[] {
-  const sessionMarket =
-    market === "hk" || market === "tw" || market === "us" || market === "cn"
-      ? market
-      : null;
+  const cfg = getChartMarketConfig(market);
+  const resolution = resolveTimeframeResolution(timeframe, market);
+  if (!cfg.filterIntradaySession || !resolution.filterSession) {
+    return bars;
+  }
 
-  if (!sessionMarket || !isIntradayTimeframe(timeframe)) return bars;
-
-  const filtered = bars.filter((b) =>
-    isInRegularSession(b.time, sessionMarket)
-  );
+  const filtered = bars.filter((b) => isInRegularSession(b.time, market));
 
   if (filtered.length >= 2) return filtered;
 
@@ -138,9 +110,8 @@ export function filterAsiaSessionBars(
 }
 
 export function getMarketTimezone(market: DetectedMarket): string | undefined {
-  if (market === "hk") return MARKET_TIMEZONE.hk;
-  if (market === "tw") return MARKET_TIMEZONE.tw;
-  if (market === "us") return MARKET_TIMEZONE.us;
-  if (market === "cn") return MARKET_TIMEZONE.cn;
-  return undefined;
+  const cfg = getChartMarketConfig(market);
+  return cfg.timezone === "UTC" && market === "unknown"
+    ? undefined
+    : cfg.timezone;
 }

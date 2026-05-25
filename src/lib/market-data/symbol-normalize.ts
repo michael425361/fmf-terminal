@@ -1,6 +1,6 @@
 import { getCatalogEntryById, getCatalogEntryBySymbol } from "@/lib/watchlist/catalog-registry";
 
-export type DetectedMarket = "us" | "cn" | "hk" | "tw" | "unknown";
+export type DetectedMarket = "us" | "cn" | "hk" | "tw" | "crypto" | "unknown";
 
 /** Pad HK equity code to 4 digits; never strip leading zeros. */
 export function padHKCode(code: string): string {
@@ -25,12 +25,18 @@ export function detectMarketFromSymbol(symbol: string): DetectedMarket {
   }
   if (upper.endsWith(".US")) return "us";
 
+  if (/-USD$/.test(upper) || /-USDT$/.test(upper)) return "crypto";
+
   const base = upper.includes(".") ? upper.split(".")[0] : upper;
 
   if (!upper.includes(".")) {
     if (/^\d{6}$/.test(base)) return "cn";
     if (/^\d{1,5}$/.test(base)) return "unknown";
     if (/^[A-Z][A-Z0-9.-]*$/.test(base)) return "us";
+  }
+
+  if (/^(BTC|ETH|SOL|BNB|XRP|DOGE|ADA|AVAX|DOT|MATIC)/i.test(base) && upper.includes("-")) {
+    return "crypto";
   }
 
   return "unknown";
@@ -140,4 +146,38 @@ export function normalizeYahooSymbol(input: string): string {
 /** Resolve provider symbol from id or ticker (alias for chart/quote APIs). */
 export function resolveProviderSymbol(symbolOrId: string): string {
   return normalizeYahooSymbol(symbolOrId);
+}
+
+/**
+ * Yahoo chart symbol attempts (primary first).
+ * HK: 0700.HK is canonical; unpadded 700.HK is only tried as fallback when primary is empty.
+ */
+export function getYahooChartSymbolCandidates(input: string): string[] {
+  const primary = normalizeYahooSymbol(input);
+  const seen = new Set<string>();
+  const out: string[] = [];
+
+  const add = (sym: string) => {
+    const key = sym.toUpperCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      out.push(sym);
+    }
+  };
+
+  add(primary);
+
+  const upper = primary.toUpperCase();
+  if (upper.endsWith(".HK")) {
+    const code = primary.slice(0, -3);
+    const stripped = code.replace(/^0+/, "") || code;
+    if (stripped !== code) {
+      add(`${stripped}.HK`);
+    }
+    if (code.length < 4) {
+      add(`${padHKCode(code)}.HK`);
+    }
+  }
+
+  return out;
 }

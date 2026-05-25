@@ -11,6 +11,7 @@ import {
   normalizeRawBar,
   reconcileOhlc,
 } from "./candle-validation";
+import { resolveTimeframeResolution } from "./timeframe-resolution";
 
 export interface SanitizeCandleOptions {
   symbol?: string;
@@ -39,8 +40,6 @@ export interface SanitizeCandleResult {
   bars: OHLCVBar[];
   rejected: RejectedCandle[];
 }
-
-const INTRADAY_TIMEFRAMES = new Set<ChartTimeframe>(["1D", "5D"]);
 
 function warnRejected(
   options: SanitizeCandleOptions,
@@ -153,10 +152,12 @@ function isIncompleteBar(
 ): boolean {
   if (!isValidVolume(bar.volume)) return true;
   // Zero-volume intraday prints are often partial / bad Yahoo rows.
+  const isFineIntraday =
+    timeframe &&
+    resolveTimeframeResolution(timeframe).category === "tick";
   if (
     !allowZeroVolumeIntraday &&
-    timeframe &&
-    INTRADAY_TIMEFRAMES.has(timeframe) &&
+    isFineIntraday &&
     bar.volume === 0
   ) {
     return true;
@@ -286,10 +287,12 @@ export function sanitizeCandleBars(
       }
     }
 
+    const fineIntraday =
+      options.timeframe &&
+      resolveTimeframeResolution(options.timeframe).category === "tick";
     if (
       !options.skipThinVolumeAnomaly &&
-      options.timeframe &&
-      INTRADAY_TIMEFRAMES.has(options.timeframe) &&
+      fineIntraday &&
       isThinVolumeAnomaly(bar, medianVol, medianRange)
     ) {
       pushReject(rejected, options, {

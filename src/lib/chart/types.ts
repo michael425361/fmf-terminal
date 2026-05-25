@@ -11,6 +11,13 @@ export interface OHLCVBar {
   volume: number;
 }
 
+export type CandleProviderId =
+  | "yahoo"
+  | "finnhub"
+  | "twelvedata"
+  | "binance"
+  | "none";
+
 export interface CandleDebugMeta {
   symbol: string;
   resolvedSymbol: string;
@@ -21,6 +28,7 @@ export interface CandleDebugMeta {
   isFallback: boolean;
   timezone?: string;
   market?: string;
+  provider?: CandleProviderId;
 }
 
 export interface CandleSeriesResponse {
@@ -30,6 +38,9 @@ export interface CandleSeriesResponse {
   change: number;
   changePercent: number;
   fetchedAt: number;
+  /** Graceful degradation — chart shows skeleton + soft message. */
+  unavailable?: boolean;
+  message?: string;
   debug?: CandleDebugMeta;
 }
 

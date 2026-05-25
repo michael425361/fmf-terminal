@@ -17,8 +17,9 @@ import { ChartHeader } from "./ChartHeader";
 import { ChartToolbar } from "./ChartToolbar";
 import { ChartTooltip } from "./ChartTooltip";
 import { ChartSkeleton } from "@/components/market/MarketSkeleton";
+import { ChartUnavailableOverlay } from "./ChartUnavailableOverlay";
 import { prepareChartBars } from "@/lib/chart/session-filter";
-import { getMarketTimezone } from "@/lib/market-data/session-filter";
+import { getChartTimezone } from "@/lib/chart/market-config";
 import { detectMarketFromSymbol } from "@/lib/market-data/symbol-normalize";
 import { cn } from "@/lib/utils";
 
@@ -48,7 +49,7 @@ export function TradingChart({ className }: { className?: string }) {
   const [crosshair, setCrosshair] = useState<CrosshairData | null>(null);
 
   const symbol = activeItem?.symbol ?? null;
-  const { data, loading, error } = useChartData({ symbol, timeframe });
+  const { data, loading, unavailable } = useChartData({ symbol, timeframe });
   const quote = activeItem ? getQuote(activeItem.id) : undefined;
 
   const rawBars = useMemo(() => data?.bars ?? [], [data?.bars]);
@@ -58,15 +59,15 @@ export function TradingChart({ className }: { className?: string }) {
     [symbol]
   );
 
-  const { displayBars, realTimeByDisplay } = useMemo(
+  const { bars: displayBars, realTimeByDisplay } = useMemo(
     () => prepareChartBars(rawBars, market, timeframe),
     [rawBars, market, timeframe]
   );
 
-  const chartTimezone = useMemo(() => {
-    if (!symbol) return undefined;
-    return getMarketTimezone(market) ?? data?.debug?.timezone;
-  }, [symbol, market, data?.debug?.timezone]);
+  const chartTimezone = useMemo(
+    () => getChartTimezone(market, data?.debug?.timezone),
+    [market, data?.debug?.timezone]
+  );
 
   return (
     <section
@@ -99,16 +100,12 @@ export function TradingChart({ className }: { className?: string }) {
           chartFullscreen && "min-h-0"
         )}
       >
-        {loading && displayBars.length === 0 ? (
+        {unavailable && displayBars.length === 0 ? (
+          <ChartUnavailableOverlay />
+        ) : loading && displayBars.length === 0 ? (
           <ChartSkeleton />
-        ) : error ? (
-          <div className="flex h-full min-h-[280px] items-center justify-center p-6 text-center text-xs text-[var(--negative)]">
-            {t("error")}: {error}
-          </div>
         ) : displayBars.length === 0 ? (
-          <div className="flex h-full min-h-[280px] items-center justify-center text-xs text-[var(--muted)]">
-            {t("noData")}
-          </div>
+          <ChartUnavailableOverlay />
         ) : (
           <>
             <ChartContainer
@@ -116,11 +113,17 @@ export function TradingChart({ className }: { className?: string }) {
               chartType={chartType}
               timeframe={timeframe}
               timezone={chartTimezone}
+              market={market}
               indicators={indicators}
               realTimeLookup={realTimeByDisplay}
               onCrosshair={setCrosshair}
             />
-            <ChartTooltip data={crosshair} timezone={chartTimezone} />
+            <ChartTooltip
+              data={crosshair}
+              timezone={chartTimezone}
+              timeframe={timeframe}
+              market={market}
+            />
             {loading && (
               <div className="pointer-events-none absolute inset-0 bg-[var(--background)]/20 transition-opacity" />
             )}

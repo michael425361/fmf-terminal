@@ -1,6 +1,10 @@
 import { ColorType, type ChartOptions, type Time } from "lightweight-charts";
 import type { ChartTimeframe } from "./types";
-import { createChartTimeFormatter } from "./chart-scale";
+import type { DetectedMarket } from "@/lib/market-data/symbol-normalize";
+import {
+  createChartTimeFormatter,
+  timeToUnixSeconds,
+} from "./chart-scale";
 import { getProfessionalCrosshairOptions } from "./crosshair";
 
 export const CHART_COLORS = {
@@ -27,13 +31,18 @@ export function getChartOptions(
   options?: {
     timezone?: string;
     timeframe?: ChartTimeframe;
+    market?: DetectedMarket;
   }
 ) {
   const timeframe = options?.timeframe ?? "1D";
-  const timeFormatter = createChartTimeFormatter(
+  const market = options?.market;
+  const formatTime = createChartTimeFormatter(
     options?.timezone,
-    timeframe
+    timeframe,
+    market
   );
+
+  const formatAxisTime = (time: Time) => formatTime(timeToUnixSeconds(time));
 
   return {
     width,
@@ -54,26 +63,20 @@ export function getChartOptions(
       scaleMargins: { top: 0.08, bottom: 0.22 },
     },
     localization: {
-      timeFormatter: (time: Time) => {
-        const sec =
-          typeof time === "number"
-            ? time
-            : typeof time === "object" && time !== null && "year" in time
-              ? Math.floor(Date.UTC(time.year, time.month - 1, time.day) / 1000)
-              : 0;
-        return timeFormatter(sec);
-      },
+      locale: "en-GB",
+      timeFormatter: formatAxisTime,
     },
     timeScale: {
       borderColor: CHART_COLORS.border,
       timeVisible: true,
       secondsVisible: false,
-      rightOffset: 10,
-      barSpacing: 6,
-      minBarSpacing: 2,
-      maxBarSpacing: 12,
+      rightOffset: 12,
+      barSpacing: 8,
+      minBarSpacing: 4,
+      maxBarSpacing: 14,
       fixLeftEdge: false,
       fixRightEdge: false,
+      tickMarkFormatter: formatAxisTime,
     },
     handleScroll: {
       mouseWheel: true,
@@ -86,5 +89,5 @@ export function getChartOptions(
       mouseWheel: true,
       pinch: true,
     },
-  } as ChartOptions;
+  } as unknown as ChartOptions;
 }

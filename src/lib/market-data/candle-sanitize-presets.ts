@@ -1,8 +1,7 @@
 import type { ChartTimeframe } from "@/lib/chart/types";
 import type { SanitizeCandleOptions } from "@/lib/chart/sanitize-candles";
+import { isIntradayResolution, resolveTimeframeResolution } from "@/lib/chart/timeframe-resolution";
 import type { DetectedMarket } from "./symbol-normalize";
-
-const INTRADAY = new Set<ChartTimeframe>(["1D", "5D"]);
 
 /** Minimal sanitization for HK/TW — keep real Yahoo OHLCV, only validate structure. */
 export function getSanitizeOptionsForMarket(
@@ -30,7 +29,8 @@ export function getSanitizeOptionsForMarket(
     };
   }
 
-  if (timeframe && INTRADAY.has(timeframe)) {
+  const resolution = resolveTimeframeResolution(timeframe, market);
+  if (isIntradayResolution(resolution)) {
     return base;
   }
 

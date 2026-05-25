@@ -274,6 +274,8 @@
     "noSymbol": "Select a symbol from your watchlist",
     "noData": "No chart data available",
     "error": "Chart error",
+    "temporarilyUnavailable": "Market data temporarily unavailable",
+    "temporarilyUnavailableHint": "Refreshing automatically. Quote data may still be live.",
     "timeframe": {
       "1D": "1D",
       "5D": "5D",

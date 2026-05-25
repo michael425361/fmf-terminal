@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { fetchCandleSeries } from "@/lib/market-data/candles";
-import { normalizeYahooSymbol } from "@/lib/market-data/symbol-normalize";
+import {
+  detectMarketFromSymbol,
+  normalizeYahooSymbol,
+} from "@/lib/market-data/symbol-normalize";
+import { getProviderChain } from "@/lib/market-data/candles/registry";
+import { resolveTimeframeConfig } from "@/lib/chart/timeframes";
 import type { ChartTimeframe } from "@/lib/chart/types";
 import { TIMEFRAME_CONFIG } from "@/lib/chart/timeframes";
 
@@ -23,25 +28,54 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "invalid timeframe" }, { status: 400 });
   }
 
+  const market = detectMarketFromSymbol(symbol);
+  const config = resolveTimeframeConfig(timeframe, market);
+
+  console.log("Fetching candle data:", {
+    symbol: rawSymbol,
+    resolvedSymbol: symbol,
+    interval: config.interval,
+    market,
+    providers: getProviderChain(market),
+    timeframe,
+  });
+
   try {
     const data = await fetchCandleSeries(symbol, timeframe);
-    if (!data) {
-      console.warn("[candles/api] unavailable", {
-        symbol: rawSymbol,
-        resolvedSymbol: symbol,
-        timeframe,
-        isFallback: false,
-      });
-      return NextResponse.json(
-        { error: "Candle data unavailable" },
-        { status: 404 }
-      );
-    }
+
+    console.log("Candle API response:", {
+      unavailable: data.unavailable ?? false,
+      barCount: data.bars.length,
+      provider: data.debug?.provider,
+    });
+
     return NextResponse.json(data, {
       headers: { "Cache-Control": "no-store, max-age=0" },
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Candle fetch failed";
-    return NextResponse.json({ error: message }, { status: 503 });
+    return NextResponse.json(
+      {
+        symbol,
+        timeframe,
+        bars: [],
+        change: 0,
+        changePercent: 0,
+        fetchedAt: Date.now(),
+        unavailable: true,
+        message: "Market data temporarily unavailable",
+        debug: {
+          symbol,
+          resolvedSymbol: symbol,
+          interval: config.interval,
+          candleCount: 0,
+          isFallback: false,
+          market,
+          provider: "none" as const,
+        },
+        error: message,
+      },
+      { status: 200 }
+    );
   }
 }

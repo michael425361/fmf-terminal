@@ -2,47 +2,32 @@
 
 import { useTranslations } from "next-intl";
 import type { CrosshairData } from "@/lib/chart/types";
+import { formatChartTimeInZone, getChartAxisMode } from "@/lib/chart/chart-scale";
 import { formatVolume } from "@/lib/market-data/format";
 import { cn } from "@/lib/utils";
 
 interface ChartTooltipProps {
   data: CrosshairData | null;
   timezone?: string;
+  timeframe?: import("@/lib/chart/types").ChartTimeframe;
+  market?: import("@/lib/market-data/symbol-normalize").DetectedMarket;
 }
 
-function formatCrosshairTime(
-  unixSec: number,
-  timezone: string | undefined,
-  intraday: boolean
-): string {
-  const d = new Date(unixSec * 1000);
-  const tz = timezone ?? "UTC";
-  if (intraday) {
-    return new Intl.DateTimeFormat("en-GB", {
-      timeZone: tz,
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }).format(d);
-  }
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone: tz,
-    month: "2-digit",
-    day: "2-digit",
-    year: "2-digit",
-  }).format(d);
-}
-
-export function ChartTooltip({ data, timezone }: ChartTooltipProps) {
+export function ChartTooltip({
+  data,
+  timezone,
+  timeframe = "1D",
+  market = "unknown",
+}: ChartTooltipProps) {
   const t = useTranslations("tradingChart");
 
   if (!data) return null;
 
   const up = data.close >= data.open;
   const wallTime = data.realTime ?? data.time;
-  const timeLabel = formatCrosshairTime(wallTime, timezone, true);
+  const tz = timezone ?? "UTC";
+  const axisMode = getChartAxisMode(timeframe, market);
+  const timeLabel = formatChartTimeInZone(wallTime, tz, axisMode);
 
   return (
     <div className="pointer-events-none absolute left-3 top-3 z-20 min-w-[140px] rounded border border-[var(--border)] bg-[var(--surface-elevated)]/95 px-2.5 py-2 font-mono text-[10px] shadow-lg backdrop-blur-sm">

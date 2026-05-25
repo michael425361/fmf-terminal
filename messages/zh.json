@@ -274,6 +274,8 @@
     "noSymbol": "请从自选列表选择标的",
     "noData": "暂无图表数据",
     "error": "图表加载失败",
+    "temporarilyUnavailable": "行情数据暂时不可用",
+    "temporarilyUnavailableHint": "正在自动重试，报价信息可能仍为实时。",
     "timeframe": {
       "1D": "1日",
       "5D": "5日",

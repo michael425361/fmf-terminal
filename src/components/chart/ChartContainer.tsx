@@ -26,14 +26,21 @@ import type {
 import { calcMA20, calcMA50, calcVWAP } from "@/lib/chart/indicators";
 import { calcRSI } from "@/lib/chart/rsi";
 import { getTimeScaleLayout } from "@/lib/chart/chart-scale";
+import { resolveTimeframeResolution } from "@/lib/chart/timeframe-resolution";
+import {
+  getVisibleLogicalRange,
+  shouldFitContent,
+} from "@/lib/chart/timeframe-resolution";
 import { resolveRealTime } from "@/lib/chart/session-filter";
 import { CHART_COLORS, getChartOptions } from "@/lib/chart/theme";
+import type { DetectedMarket } from "@/lib/market-data/symbol-normalize";
 
 interface ChartContainerProps {
   bars: OHLCVBar[];
   chartType: ChartType;
   timeframe: ChartTimeframe;
   timezone?: string;
+  market?: DetectedMarket;
   indicators: ChartIndicatorState;
   realTimeLookup?: Map<number, number>;
   onCrosshair: (data: CrosshairData | null) => void;
@@ -122,6 +129,7 @@ export function ChartContainer({
   chartType,
   timeframe,
   timezone,
+  market = "unknown",
   indicators,
   realTimeLookup,
   onCrosshair,
@@ -144,8 +152,10 @@ export function ChartContainer({
   onCrosshairRef.current = onCrosshair;
   const timeframeRef = useRef(timeframe);
   const timezoneRef = useRef(timezone);
+  const marketRef = useRef(market);
   timeframeRef.current = timeframe;
   timezoneRef.current = timezone;
+  marketRef.current = market;
 
   realTimeLookupRef.current = realTimeLookup ?? new Map();
 
@@ -357,10 +367,26 @@ export function ChartContainer({
           const layout = getTimeScaleLayout(
             timeframeRef.current,
             clean.length,
-            width
+            width,
+            marketRef.current
           );
           chart.timeScale().applyOptions(layout);
-          chart.timeScale().fitContent();
+
+          const resolution = resolveTimeframeResolution(
+            timeframeRef.current,
+            marketRef.current
+          );
+
+          if (shouldFitContent(resolution)) {
+            chart.timeScale().fitContent();
+          } else {
+            const range = getVisibleLogicalRange(resolution, clean.length);
+            if (range) {
+              chart.timeScale().setVisibleLogicalRange(range);
+            } else {
+              chart.timeScale().fitContent();
+            }
+          }
         }
       } catch {
         if (isChartAlive(chart)) {
@@ -383,6 +409,7 @@ export function ChartContainer({
       getChartOptions(el.clientWidth, el.clientHeight, {
         timezone: timezoneRef.current,
         timeframe: timeframeRef.current,
+        market: marketRef.current,
       })
     );
     chartRef.current = chart;
@@ -482,10 +509,10 @@ export function ChartContainer({
       getChartOptions(
         containerRef.current?.clientWidth ?? 800,
         containerRef.current?.clientHeight ?? 400,
-        { timezone, timeframe }
+        { timezone, timeframe, market }
       )
     );
-  }, [timeframe, timezone]);
+  }, [timeframe, timezone, market]);
 
   return (
     <div

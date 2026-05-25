@@ -5,7 +5,9 @@ import { CHART_COLORS } from "./theme";
 export function getProfessionalCrosshairOptions(): ChartOptions["crosshair"] {
   return {
     mode: CrosshairMode.Normal,
+    doNotSnapToHiddenSeriesIndices: false,
     vertLine: {
+      visible: true,
       color: CHART_COLORS.crosshair,
       width: 1,
       style: 2,
@@ -13,6 +15,7 @@ export function getProfessionalCrosshairOptions(): ChartOptions["crosshair"] {
       labelBackgroundColor: "#161b24",
     },
     horzLine: {
+      visible: true,
       color: CHART_COLORS.crosshair,
       width: 1,
       style: 2,

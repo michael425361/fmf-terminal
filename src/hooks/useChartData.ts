@@ -5,7 +5,10 @@ import type {
   CandleSeriesResponse,
   ChartTimeframe,
 } from "@/lib/chart/types";
-import { normalizeYahooSymbol } from "@/lib/market-data/symbol-normalize";
+import {
+  detectMarketFromSymbol,
+  normalizeYahooSymbol,
+} from "@/lib/market-data/symbol-normalize";
 
 interface UseChartDataOptions {
   symbol: string | null;
@@ -20,25 +23,25 @@ export function useChartData({
 }: UseChartDataOptions) {
   const [data, setData] = useState<CandleSeriesResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [unavailable, setUnavailable] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!symbol) {
       setData(null);
       setLoading(false);
-      setError(null);
+      setUnavailable(false);
       return;
     }
-    setData(null);
     setLoading(true);
-    setError(null);
+    setUnavailable(false);
   }, [symbol, timeframe]);
 
   const fetchData = useCallback(async () => {
     if (!symbol) {
       setData(null);
       setLoading(false);
+      setUnavailable(false);
       return;
     }
 
@@ -47,10 +50,18 @@ export function useChartData({
     abortRef.current = controller;
 
     setLoading(true);
-    setError(null);
 
     try {
       const providerSymbol = normalizeYahooSymbol(symbol);
+      const market = detectMarketFromSymbol(providerSymbol);
+
+      console.log("Fetching candle data:", {
+        symbol,
+        providerSymbol,
+        interval: timeframe,
+        market,
+      });
+
       const url = `/api/market/candles?symbol=${encodeURIComponent(providerSymbol)}&timeframe=${timeframe}`;
       const res = await fetch(url, {
         signal: controller.signal,
@@ -64,21 +75,34 @@ export function useChartData({
         );
       }
 
-      if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as {
-          error?: string;
-        };
-        throw new Error(body.error ?? `HTTP ${res.status}`);
+      const json = (await res.json()) as CandleSeriesResponse;
+
+      console.log("Candle API response:", {
+        status: res.status,
+        barCount: json.bars?.length ?? 0,
+        unavailable: json.unavailable,
+        provider: json.debug?.provider,
+      });
+
+      if (controller.signal.aborted) return;
+
+      const isUnavailable =
+        json.unavailable === true || (json.bars?.length ?? 0) < 2;
+
+      if (isUnavailable) {
+        setUnavailable(true);
+        if ((json.bars?.length ?? 0) >= 2) {
+          setData(json);
+        }
+      } else {
+        setUnavailable(false);
+        setData(json);
       }
 
-      const json = (await res.json()) as CandleSeriesResponse;
-      if (!controller.signal.aborted) {
-        setData(json);
-        setLoading(false);
-      }
+      setLoading(false);
     } catch (err) {
       if (controller.signal.aborted) return;
-      setError(err instanceof Error ? err.message : "Failed to load chart");
+      setUnavailable(true);
       setLoading(false);
     }
   }, [symbol, timeframe]);
@@ -92,5 +116,5 @@ export function useChartData({
     };
   }, [fetchData, refreshIntervalMs]);
 
-  return { data, loading, error, refetch: fetchData };
+  return { data, loading, unavailable, refetch: fetchData };
 }
