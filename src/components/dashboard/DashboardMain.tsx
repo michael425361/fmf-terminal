@@ -3,7 +3,6 @@
 import { TradingChart } from "@/components/chart/TradingChart";
 import { RightPanel } from "./RightPanel";
 import { MarketDetailPanel } from "./MarketDetailPanel";
-import { AIMarketSummaryClient } from "./AIMarketSummaryClient";
 import { useMobileLayout } from "@/providers/MobileLayoutProvider";
 import { cn } from "@/lib/utils";
 
@@ -31,9 +30,8 @@ export function DashboardMain() {
             chartFullscreen && "min-h-0 flex-1"
           )}
         />
-        <div className="hidden shrink-0 flex-col gap-2 lg:flex lg:gap-3">
+        <div className="hidden shrink-0 lg:block">
           <MarketDetailPanel />
-          <AIMarketSummaryClient />
         </div>
       </div>
 

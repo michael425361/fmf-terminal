@@ -8,53 +8,96 @@
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+NEXT_PUBLIC_SITE_URL=https://www.fmfterminal.com
 ```
 
 ## 2. Configure redirect URLs
 
-In **Authentication → URL Configuration**, add:
+In **Authentication → URL Configuration**:
 
-| Environment | Site URL | Redirect URLs |
-|-------------|----------|---------------|
-| Local | `http://localhost:3000` | `http://localhost:3000/auth/callback` |
-| Production | `https://www.fmfterminal.com` | `https://www.fmfterminal.com/auth/callback` |
+| Setting | Value |
+|---------|--------|
+| **Site URL** (local) | `http://localhost:3000` |
+| **Site URL** (production) | `https://www.fmfterminal.com` |
+
+**Redirect URLs** — add every origin/port you use (Supabase must match exactly):
+
+```
+http://localhost:3000/auth/callback
+http://localhost:3001/auth/callback
+http://localhost:3002/auth/callback
+http://localhost:3003/auth/callback
+http://localhost:3004/auth/callback
+https://www.fmfterminal.com/auth/callback
+```
+
+Tip: If your dev server picks another port (e.g. 3004 because 3000 is busy), that exact callback URL must be listed or OAuth will fail with *redirect URL mismatch*.
 
 ## 3. Enable providers
 
 In **Authentication → Providers**:
 
-- **Email** — enabled (password sign-in / sign-up)
-- **Google** — enable and add OAuth client ID/secret from Google Cloud Console
-- **Apple** — enable and configure Apple Developer credentials
+| Provider | Required |
+|----------|----------|
+| **Email** | Enabled (password sign-in / sign-up) |
+| **Google** | Enabled + Client ID & Client Secret |
+| **Apple** | Enabled + Apple Developer credentials |
 
-## 4. Email templates (optional)
+## 4. Google Cloud Console
 
-Customize confirmation and magic-link emails under **Authentication → Email Templates**.
+1. [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials → OAuth 2.0 Client ID (Web).
+2. **Authorized JavaScript origins** (optional for Supabase-hosted flow):
+   - `http://localhost:3000` (and other local ports you use)
+   - `https://www.fmfterminal.com`
+3. **Authorized redirect URIs** (required):
 
-## 5. Run locally
+```
+https://<YOUR-PROJECT-REF>.supabase.co/auth/v1/callback
+```
+
+Use the exact callback URL from Supabase → Authentication → Providers → Google.
+
+4. Paste Client ID and Client Secret into Supabase Google provider settings.
+
+## 5. Apple Sign In
+
+Apple requires:
+
+- Apple Developer Program membership
+- **Services ID** + **Sign in with Apple** key
+- Domain & return URLs registered in Apple Developer
+
+**Return URL in Apple Developer** (same as Google):
+
+```
+https://<YOUR-PROJECT-REF>.supabase.co/auth/v1/callback
+```
+
+**Localhost:** Apple often does not support `http://localhost` for Sign in with Apple. For local dev, use **Google** or **email**, or test Apple on production `https://www.fmfterminal.com`.
+
+## 6. Run locally
 
 ```bash
 npm run dev
 ```
 
-Open Community or tap **Sign in**. OAuth returns to `/auth/callback`, then redirects back to your current locale path.
+Open the app, tap **Sign in** → **Continue with Google** / **Apple**.
 
-## Profiles table
+Flow:
 
-Run the SQL migration in Supabase SQL Editor:
+1. Browser → Google/Apple
+2. Redirect → `https://xxxx.supabase.co/auth/v1/callback`
+3. Redirect → `http://localhost:PORT/auth/callback?code=...&next=/en/...`
+4. App exchanges code → session cookies → redirects to `next`
 
-**File:** `supabase/migrations/001_profiles.sql`
+In development, the browser console logs `OAuth clicked: { provider, redirectTo, origin }`.
 
-This creates:
+## 7. Profiles table
 
-- `public.profiles` (`id`, `username`, `avatar_url`, `bio`, `created_at`)
-- RLS policies (public read, users insert/update/delete own row)
-- Trigger `on_auth_user_created` → auto-insert `FMF_Trader_XXXX` username
-- Backfill for existing `auth.users`
+Run in Supabase SQL Editor:
 
-After running SQL, sign out and sign in again to load your profile row.
-
-For avatar uploads, also run `supabase/migrations/002_avatars_storage.sql` — see [SUPABASE_AVATARS.md](./SUPABASE_AVATARS.md).
+- `supabase/migrations/001_profiles.sql`
+- `supabase/migrations/002_avatars_storage.sql` (avatars)
 
 ## Architecture
 
@@ -63,15 +106,17 @@ For avatar uploads, also run `supabase/migrations/002_avatars_storage.sql` — s
 | `src/lib/supabase/client.ts` | Browser client |
 | `src/lib/supabase/server.ts` | Server Components / route handlers |
 | `src/lib/supabase/middleware.ts` | Session cookie refresh |
-| `src/app/auth/callback/route.ts` | OAuth code exchange |
-| `src/providers/AuthProvider.tsx` | Session state + auth modal |
-| `src/lib/auth/profile.ts` | `UserProfile` view model |
-| `src/lib/auth/profiles.ts` | Fetch / ensure profile from `public.profiles` |
-| `supabase/migrations/001_profiles.sql` | Table, RLS, trigger, backfill |
-| `src/components/auth/AuthProfileMenu.tsx` | Avatar dropdown (username, sign out) |
+| `src/lib/auth/oauth.ts` | OAuth callback URL builder |
+| `src/app/auth/callback/route.ts` | PKCE code exchange + cookie write on redirect |
+| `src/components/auth/AuthModal.tsx` | `signInWithOAuth` + `window.location.assign(data.url)` |
+| `src/providers/AuthProvider.tsx` | Session state + `auth_error` query handling |
 
-Protected actions (open auth modal when signed out):
+## Troubleshooting
 
-- Create post
-- Comment / reply
-- Add to watchlist (favorites)
+| Symptom | Likely cause |
+|---------|----------------|
+| Button spins, nothing happens | `data.url` missing — providers disabled in Supabase |
+| Redirect URL mismatch | Add exact `http://localhost:PORT/auth/callback` to Supabase |
+| Returns logged out after OAuth | Callback cookies — fixed in `auth/callback/route.ts` (cookies on redirect response) |
+| Apple fails on localhost | Apple requires HTTPS + registered domain — use production |
+| `auth_error=1` in URL | Open browser console / server logs for `[auth/callback]` message |

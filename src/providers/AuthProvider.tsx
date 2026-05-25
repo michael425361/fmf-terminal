@@ -144,6 +144,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has("auth_error")) return;
+
+    const message = params.get("auth_message");
+    showToast(
+      message
+        ? decodeURIComponent(message).slice(0, 120)
+        : "Sign-in failed. Check Supabase redirect URLs and OAuth providers.",
+      "error"
+    );
+
+    params.delete("auth_error");
+    params.delete("auth_message");
+    const qs = params.toString();
+    const nextUrl = `${window.location.pathname}${qs ? `?${qs}` : ""}`;
+    window.history.replaceState(null, "", nextUrl);
+  }, [showToast]);
+
   const openAuth = useCallback((reason: AuthReason = "general") => {
     setAuthReason(reason);
     setAuthOpen(true);

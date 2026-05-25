@@ -28,7 +28,10 @@
     },
     "errors": {
       "notConfigured": "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
-      "invalidCredentials": "Enter a valid email and password (min 6 characters)."
+      "invalidCredentials": "Enter a valid email and password (min 6 characters).",
+      "redirectMissing": "Could not build sign-in redirect URL. Refresh and try again.",
+      "oauthNoUrl": "OAuth did not return a provider URL. Check Supabase Google/Apple providers and redirect URLs.",
+      "oauthFailed": "OAuth sign-in failed. Try again or use email."
     },
     "profileMenu": {
       "openMenu": "Open profile menu",
@@ -418,9 +421,24 @@
   },
   "aiSummary": {
     "title": "AI Market Summary",
+    "briefTitle": "AI Market Brief",
     "sentiment": "Sentiment",
-    "confidence": "Confidence",
-    "disclaimer": "Mock AI output — not financial advice. Connect OpenAI API in a future release for live summaries."
+    "lastPrice": "Last",
+    "generated": "Generated",
+    "generating": "Generating market analysis…",
+    "refresh": "Refresh AI summary",
+    "refreshShort": "Refresh",
+    "refreshCooldown": "{seconds}s",
+    "selectSymbol": "Select a symbol to generate an AI market brief.",
+    "unavailableTitle": "Brief unavailable",
+    "unavailable": "AI summary temporarily unavailable",
+    "cached": "Cached · 5m",
+    "sentimentValues": {
+      "bullish": "Bullish",
+      "bearish": "Bearish",
+      "neutral": "Neutral"
+    },
+    "disclaimer": "Generated from market price action and technical indicators."
   },
   "calendar": {
     "title": "Economic Calendar",

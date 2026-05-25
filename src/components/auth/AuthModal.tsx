@@ -4,6 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Mail, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { lockDocumentScroll } from "@/lib/scroll-to-top";
+import {
+  buildOAuthCallbackUrl,
+  logOAuthClick,
+} from "@/lib/auth/oauth";
+import type { Locale } from "@/i18n/routing";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import type { AuthReason } from "@/providers/AuthProvider";
 import { cn } from "@/lib/utils";
@@ -62,13 +67,8 @@ export function AuthModal({ open, reason, onClose }: AuthModalProps) {
   }, []);
 
   const redirectTo = useMemo(() => {
-    if (typeof window === "undefined") return undefined;
-    const path =
-      window.location.pathname.startsWith(`/${locale}`) ||
-      window.location.pathname === `/${locale}`
-        ? window.location.pathname
-        : `/${locale}${window.location.pathname === "/" ? "" : window.location.pathname}`;
-    return `${window.location.origin}/auth/callback?next=${encodeURIComponent(path)}`;
+    if (!open || typeof window === "undefined") return undefined;
+    return buildOAuthCallbackUrl(locale as Locale);
   }, [locale, open]);
 
   useEffect(() => {
@@ -94,14 +94,44 @@ export function AuthModal({ open, reason, onClose }: AuthModalProps) {
         setError(t("errors.notConfigured"));
         return;
       }
+      if (!redirectTo) {
+        setError(t("errors.redirectMissing"));
+        return;
+      }
+
+      logOAuthClick(provider, redirectTo);
       setError(null);
       setBusy(provider);
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: { redirectTo },
-      });
-      if (oauthError) {
-        setError(oauthError.message);
+
+      try {
+        const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+          provider,
+          options: {
+            redirectTo,
+            queryParams:
+              provider === "google"
+                ? { access_type: "offline", prompt: "consent" }
+                : undefined,
+          },
+        });
+
+        if (oauthError) {
+          setError(oauthError.message);
+          setBusy(null);
+          return;
+        }
+
+        if (data?.url) {
+          window.location.assign(data.url);
+          return;
+        }
+
+        setError(t("errors.oauthNoUrl"));
+        setBusy(null);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : t("errors.oauthFailed");
+        setError(message);
         setBusy(null);
       }
     },

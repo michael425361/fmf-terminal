@@ -28,7 +28,10 @@
     },
     "errors": {
       "notConfigured": "未配置 Supabase，请设置 NEXT_PUBLIC_SUPABASE_URL 与 NEXT_PUBLIC_SUPABASE_ANON_KEY。",
-      "invalidCredentials": "请输入有效邮箱和密码（至少 6 位）。"
+      "invalidCredentials": "请输入有效邮箱和密码（至少 6 位）。",
+      "redirectMissing": "无法生成登录回调地址，请刷新后重试。",
+      "oauthNoUrl": "OAuth 未返回跳转链接，请检查 Supabase 中 Google/Apple 与 Redirect URLs 配置。",
+      "oauthFailed": "OAuth 登录失败，请重试或使用邮箱登录。"
     },
     "profileMenu": {
       "openMenu": "打开个人菜单",
@@ -418,9 +421,24 @@
   },
   "aiSummary": {
     "title": "AI 市场摘要",
+    "briefTitle": "AI 市场简报",
     "sentiment": "市场情绪",
-    "confidence": "置信度",
-    "disclaimer": "模拟 AI 输出，不构成投资建议。后续版本可接入 OpenAI API 生成实时摘要。"
+    "lastPrice": "最新",
+    "generated": "生成于",
+    "generating": "正在生成市场分析…",
+    "refresh": "刷新 AI 摘要",
+    "refreshShort": "刷新",
+    "refreshCooldown": "{seconds}秒",
+    "selectSymbol": "请选择标的以生成 AI 市场简报。",
+    "unavailableTitle": "简报不可用",
+    "unavailable": "AI 摘要暂时不可用",
+    "cached": "缓存 · 5 分钟",
+    "sentimentValues": {
+      "bullish": "偏多",
+      "bearish": "偏空",
+      "neutral": "中性"
+    },
+    "disclaimer": "内容由市场价格走势与技术指标生成。"
   },
   "calendar": {
     "title": "经济日历",

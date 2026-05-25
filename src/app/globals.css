@@ -546,3 +546,51 @@ html.viewport-locked body {
     transform: scale(1) translateY(0);
   }
 }
+
+/* AI Market Brief — institutional terminal */
+.ai-brief-panel {
+  background: linear-gradient(
+    180deg,
+    var(--surface-card) 0%,
+    color-mix(in srgb, var(--background) 88%, var(--surface-card)) 100%
+  );
+}
+
+.ai-brief-header {
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--foreground) 4%, transparent);
+}
+
+.ai-brief-badge {
+  letter-spacing: 0.14em;
+}
+
+.ai-brief-pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--background);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-brief-pill::before {
+  content: "[ ";
+  color: var(--muted);
+}
+
+.ai-brief-pill::after {
+  content: " ]";
+  color: var(--muted);
+}
+
+.ai-brief-disclaimer {
+  font-family: var(--font-geist-mono, ui-monospace, monospace);
+}
+
+.ai-brief-unavailable {
+  border-left: 2px solid color-mix(in srgb, var(--muted) 50%, transparent);
+}
