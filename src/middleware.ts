@@ -41,8 +41,11 @@ function localePipeline(request: NextRequest): Promise<NextResponse> {
 const clerkHandler = isClerkConfigured()
   ? clerkMiddleware(async (auth, request) => {
       const { pathname } = request.nextUrl;
+      // API/auth callback: skip locale pipeline but do NOT return NextResponse.next().
+      // Bare next() bypasses Clerk's auth header injection; returning undefined lets
+      // clerkMiddleware finalize the request so auth() works in route handlers.
       if (isApiOrAuthRoute(pathname)) {
-        return NextResponse.next();
+        return;
       }
       if (isProtectedRoute(request)) {
         await auth.protect();

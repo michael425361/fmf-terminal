@@ -24,17 +24,28 @@ export interface AuthUserIdentity {
 
 /** Resolves the current user's id + primary email (for profile sync). */
 export async function getAuthIdentity(): Promise<AuthUserIdentity | null> {
-  if (!isClerkConfigured()) return null;
+  if (!isClerkConfigured()) {
+    console.info("[auth] getAuthIdentity: Clerk not configured");
+    return null;
+  }
   try {
     const { userId } = await auth();
-    if (!userId) return null;
+    if (!userId) {
+      console.info("[auth] getAuthIdentity: no Clerk session (userId null)");
+      return null;
+    }
     const user = await currentUser();
     const email =
       user?.primaryEmailAddress?.emailAddress ??
       user?.emailAddresses?.[0]?.emailAddress ??
       null;
+    console.info("[auth] getAuthIdentity: ok", { userId });
     return { userId, email };
-  } catch {
+  } catch (err) {
+    console.warn(
+      "[auth] getAuthIdentity: failed",
+      err instanceof Error ? err.message : err
+    );
     return null;
   }
 }

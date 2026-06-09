@@ -17,11 +17,15 @@ export async function POST(request: Request) {
 
   const identity = await getAuthIdentity();
   if (!identity) {
+    console.info("[api/billing/checkout] auth_required — no Clerk session");
     return NextResponse.json(
       { ok: false, error: "auth_required" },
       { status: 401 }
     );
   }
+  console.info("[api/billing/checkout] authenticated", {
+    userId: identity.userId,
+  });
 
   const stripe = getStripe();
   const priceId = proPriceId();
@@ -63,6 +67,10 @@ export async function POST(request: Request) {
       cancel_url: `${appUrl}/${locale}/pricing?status=cancelled`,
     });
 
+    console.info("[api/billing/checkout] session created", {
+      userId,
+      sessionId: session.id,
+    });
     return NextResponse.json({ ok: true, url: session.url });
   } catch (err) {
     console.error(
