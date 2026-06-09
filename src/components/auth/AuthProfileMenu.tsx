@@ -9,8 +9,16 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { ChevronDown, LogOut, UserPen } from "lucide-react";
+import {
+  ChevronDown,
+  CreditCard,
+  LogOut,
+  Sparkles,
+  UserPen,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
+import { useEntitlements } from "@/components/billing/useEntitlements";
 import type { UserProfile } from "@/lib/auth/profile";
 import { UserAvatar } from "./UserAvatar";
 import { cn } from "@/lib/utils";
@@ -33,6 +41,10 @@ export function AuthProfileMenu({
   className,
 }: AuthProfileMenuProps) {
   const t = useTranslations("auth.profileMenu");
+  const router = useRouter();
+  const { data: entitlements, loading: entitlementsLoading } = useEntitlements();
+  const isPro = entitlements?.plan === "pro";
+
   const menuId = useId();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -42,7 +54,7 @@ export function AuthProfileMenu({
     width: number;
   } | null>(null);
 
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const openRef = useRef(false);
 
@@ -61,6 +73,11 @@ export function AuthProfileMenu({
     if (openRef.current) close();
     else openMenu();
   }, [close, openMenu]);
+
+  const goToBilling = useCallback(() => {
+    close();
+    router.push("/account/billing");
+  }, [close, router]);
 
   useEffect(() => {
     setMounted(true);
@@ -134,6 +151,8 @@ export function AuthProfileMenu({
     void onSignOut();
   }, [close, onSignOut]);
 
+  const showProBadge = !entitlementsLoading && !isPro;
+
   const menuPanel =
     open && menuStyle && mounted ? (
       <div
@@ -186,6 +205,38 @@ export function AuthProfileMenu({
         <button
           type="button"
           role="menuitem"
+          onClick={goToBilling}
+          className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs text-[var(--foreground)] transition hover:bg-[var(--surface-elevated)] active:bg-[var(--surface-elevated)]"
+        >
+          <CreditCard className="h-3.5 w-3.5 shrink-0 text-[var(--accent)]" />
+          {t("billing")}
+        </button>
+
+        {isPro ? (
+          <button
+            type="button"
+            role="menuitem"
+            onClick={goToBilling}
+            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs text-[var(--foreground)] transition hover:bg-[var(--surface-elevated)] active:bg-[var(--surface-elevated)]"
+          >
+            <CreditCard className="h-3.5 w-3.5 shrink-0 text-[var(--muted)]" />
+            {t("manageSubscription")}
+          </button>
+        ) : (
+          <button
+            type="button"
+            role="menuitem"
+            onClick={goToBilling}
+            className="mx-2 my-1 flex w-[calc(100%-1rem)] items-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2.5 text-left text-xs font-semibold text-emerald-400 transition hover:border-emerald-400/60 hover:bg-emerald-500/20 active:bg-emerald-500/25"
+          >
+            <Sparkles className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+            ⭐ {t("upgradeToPro")}
+          </button>
+        )}
+
+        <button
+          type="button"
+          role="menuitem"
           onClick={handleSignOut}
           className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs text-[var(--muted)] transition hover:bg-[var(--surface-elevated)] hover:text-[var(--negative)] active:bg-[var(--surface-elevated)]"
         >
@@ -197,9 +248,8 @@ export function AuthProfileMenu({
 
   return (
     <>
-      <div className={cn("relative z-[60]", className)}>
+      <div ref={triggerRef} className={cn("relative z-[60] flex items-center gap-1", className)}>
         <button
-          ref={triggerRef}
           type="button"
           onClick={(e) => {
             e.stopPropagation();
@@ -235,6 +285,20 @@ export function AuthProfileMenu({
             )}
           />
         </button>
+
+        {showProBadge && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              router.push("/account/billing");
+            }}
+            className="rounded border border-emerald-500/50 bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-emerald-400 transition hover:border-emerald-400/70 hover:bg-emerald-500/25 active:scale-[0.97]"
+            aria-label={t("proBadge")}
+          >
+            PRO
+          </button>
+        )}
       </div>
 
       {mounted && menuPanel && createPortal(menuPanel, document.body)}

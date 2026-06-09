@@ -38,6 +38,10 @@
       "loading": "加载资料中…",
       "loadingUsername": "加载中…",
       "editProfile": "编辑资料",
+      "billing": "账单",
+      "upgradeToPro": "升级 Pro",
+      "manageSubscription": "管理订阅",
+      "proBadge": "升级 Pro",
       "signOut": "退出登录",
       "email": "邮箱"
     },

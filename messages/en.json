@@ -38,6 +38,10 @@
       "loading": "Loading profile…",
       "loadingUsername": "Loading…",
       "editProfile": "Edit profile",
+      "billing": "Billing",
+      "upgradeToPro": "Upgrade to Pro",
+      "manageSubscription": "Manage subscription",
+      "proBadge": "Upgrade to Pro",
       "signOut": "Sign out",
       "email": "Email"
     },
