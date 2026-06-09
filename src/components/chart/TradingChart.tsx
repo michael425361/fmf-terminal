@@ -19,6 +19,7 @@ import { ChartTooltip } from "./ChartTooltip";
 import { ChartSkeleton } from "@/components/market/MarketSkeleton";
 import { ChartUnavailableOverlay } from "./ChartUnavailableOverlay";
 import { AISummaryCard } from "@/components/ai/AISummaryCard";
+import { AIInsightsClientPanel } from "@/components/ai/AIInsightsClientPanel";
 import { prepareChartBars } from "@/lib/chart/session-filter";
 import { getChartTimezone } from "@/lib/chart/market-config";
 import { detectMarketFromSymbol } from "@/lib/market-data/symbol-normalize";
@@ -145,6 +146,14 @@ export function TradingChart({ className }: { className?: string }) {
           market={market}
           quote={quote}
           candles={rawBars}
+        />
+      )}
+
+      {!chartFullscreen && (
+        <AIInsightsClientPanel
+          symbol={activeItem?.symbol ?? null}
+          market={market}
+          quote={quote}
         />
       )}
     </div>

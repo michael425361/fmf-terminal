@@ -2,6 +2,9 @@ node_modules
 .next
 out
 build
+coverage
+# local env files (keep .env*.example templates tracked)
 .env
 .env.local
+.env*.local
 tsconfig.tsbuildinfo

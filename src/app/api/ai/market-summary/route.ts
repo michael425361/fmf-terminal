@@ -15,8 +15,12 @@ import {
   type AISummaryLocale,
 } from "@/lib/ai/locale";
 import { detectMarketFromSymbol } from "@/lib/market-data/symbol-normalize";
+import { guardAIRequest, recordAIUsage } from "@/lib/usage/guard";
+import { clientIp } from "@/lib/saas/rate-limit-kv";
 
 export const dynamic = "force-dynamic";
+
+const ENDPOINT = "/api/ai/market-summary";
 
 const UNAVAILABLE: MarketSummaryResponse = {
   summary: "",
@@ -100,11 +104,24 @@ export async function POST(request: Request) {
     return NextResponse.json(UNAVAILABLE, { status: 200 });
   }
 
+  const guard = await guardAIRequest(
+    "market-summary",
+    locale,
+    clientIp(request)
+  );
+  if (!guard.ok) return guard.response;
+
   const cacheKey = marketSummaryCacheKey(symbol, market, locale);
 
   if (!skipCache) {
     const cached = getCachedMarketSummary(cacheKey);
     if (cached) {
+      await recordAIUsage(guard.ctx, {
+        endpoint: ENDPOINT,
+        feature: "market-summary",
+        cached: true,
+        responseText: JSON.stringify(cached),
+      });
       return NextResponse.json(cached, {
         headers: { "Cache-Control": "private, max-age=300" },
       });
@@ -114,6 +131,12 @@ export async function POST(request: Request) {
   try {
     const result = await generateMarketSummary(payload);
     setCachedMarketSummary(cacheKey, { ...result, locale });
+    await recordAIUsage(guard.ctx, {
+      endpoint: ENDPOINT,
+      feature: "market-summary",
+      cached: false,
+      responseText: JSON.stringify(result),
+    });
     return NextResponse.json({ ...result, locale }, {
       headers: { "Cache-Control": "private, max-age=300" },
     });
