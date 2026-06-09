@@ -144,6 +144,34 @@ export function CardEmpty({ message }: { message: string }) {
   );
 }
 
+export function SectionError({
+  message,
+  onRetry,
+  retryLabel,
+}: {
+  message: string;
+  onRetry?: () => void;
+  retryLabel?: string;
+}) {
+  return (
+    <div
+      className="rounded border border-[var(--border)]/80 bg-[var(--background)] px-3 py-3"
+      role="alert"
+    >
+      <p className="text-xs leading-relaxed text-[var(--muted)]">{message}</p>
+      {onRetry && retryLabel ? (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-2 flex h-7 items-center rounded border border-[var(--border)] px-2.5 font-mono text-[9px] uppercase tracking-wider text-[var(--muted)] transition hover:border-[var(--accent)]/40 hover:text-[var(--accent)]"
+        >
+          {retryLabel}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 const DISCLAIMERS: Record<"en" | "zh", string> = {
   en: "AI-generated analysis for information only. Not investment advice.",
   zh: "AI 生成内容，仅供参考，不构成投资建议。",

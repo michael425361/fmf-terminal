@@ -114,8 +114,11 @@ export function AISummaryCard({
       enabled: Boolean(asset?.symbol && candles.length >= 2),
     });
 
-  const unavailable = data?.unavailable === true;
-  const hasSummary = Boolean(data?.summary && !unavailable);
+  const summaryText = data?.summary?.trim() ?? "";
+  const unavailable =
+    data?.unavailable === true || (!loading && data != null && !summaryText);
+  const hasSummary = Boolean(summaryText && !unavailable);
+  const displayMessage = data?.message ?? t("emptySummary");
   const sentiment = (data?.sentiment ?? "neutral") as MarketSummarySentiment;
   const sentimentLabel = t(`sentimentValues.${sentiment}`);
   const generatedLabel =
@@ -189,8 +192,21 @@ export function AISummaryCard({
               {t("unavailableTitle")}
             </p>
             <p className="mt-2 text-xs leading-relaxed text-[var(--muted)]">
-              {t("unavailable")}
+              {displayMessage}
             </p>
+            <button
+              type="button"
+              onClick={() => refresh()}
+              disabled={!canRefresh || !asset}
+              className="mt-3 flex h-7 items-center gap-1 rounded border border-[var(--border)] px-2.5 font-mono text-[9px] uppercase tracking-wider text-[var(--muted)] transition hover:border-[var(--accent)]/40 hover:text-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              {loading ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3 w-3" />
+              )}
+              {t("retry")}
+            </button>
           </div>
         ) : (
           <>

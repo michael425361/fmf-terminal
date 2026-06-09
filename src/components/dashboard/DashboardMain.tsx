@@ -19,15 +19,12 @@ export function DashboardMain() {
       <div
         className={cn(
           "flex min-h-0 min-w-0 flex-col gap-2 lg:col-span-7 lg:gap-3",
-          chartFullscreen
-            ? "h-full min-h-0 flex-1"
-            : "min-h-[min(72dvh,640px)] lg:min-h-0"
+          chartFullscreen ? "h-full min-h-0 flex-1" : "min-h-0"
         )}
       >
         <TradingChart
           className={cn(
-            "min-h-0 flex-1",
-            chartFullscreen && "min-h-0 flex-1"
+            chartFullscreen ? "min-h-0 flex-1" : "min-h-0 shrink-0 lg:flex-1"
           )}
         />
         <div className="hidden shrink-0 lg:block">

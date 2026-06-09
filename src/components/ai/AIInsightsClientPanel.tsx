@@ -1,6 +1,7 @@
 "use client";
 
-import { Loader2, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useAIInsights } from "@/hooks/useAIInsights";
 import type { MarketQuote } from "@/lib/market-data/types";
 import type { DetectedMarket } from "@/lib/market-data/symbol-normalize";
@@ -10,7 +11,7 @@ import { NewsImpactCard } from "./NewsImpactCard";
 import { BullBearCard } from "./BullBearCard";
 import { CatalystCard } from "./CatalystCard";
 import { EarningsAnalysisCard } from "./EarningsAnalysisCard";
-import { AIDisclaimer, CardEmpty, CardShell, ConfidenceBar } from "./ai-ui";
+import { AIDisclaimer, CardEmpty, CardShell, ConfidenceBar, SectionError } from "./ai-ui";
 
 interface AIInsightsClientPanelProps {
   symbol: string | null;
@@ -47,6 +48,7 @@ export function AIInsightsClientPanel({
   quote,
   className,
 }: AIInsightsClientPanelProps) {
+  const t = useTranslations("aiSummary");
   const { locale, hasRun, explain, research, earnings, news, run } = useAIInsights({
     symbol,
     priceChange: quote?.changePercent ?? 0,
@@ -56,6 +58,8 @@ export function AIInsightsClientPanel({
   const zh = locale === "zh";
   const supported = market === "us";
   const heading = zh ? "AI 深度分析" : "AI Deep Analysis";
+  const retryLabel = t("retry");
+  const sectionErrorMessage = (message?: string) => message ?? t("unavailable");
 
   return (
     <section
@@ -110,13 +114,25 @@ export function AIInsightsClientPanel({
           <>
             {explain.loading ? (
               <SectionSkeleton lines={3} />
-            ) : explain.error || !explain.data ? null : (
+            ) : explain.error || !explain.data ? (
+              <SectionError
+                message={sectionErrorMessage(explain.errorMessage)}
+                onRetry={() => run()}
+                retryLabel={retryLabel}
+              />
+            ) : (
               <ExplainMoveCard data={explain.data} locale={locale} />
             )}
 
             {news.loading ? (
               <SectionSkeleton lines={4} />
-            ) : news.error || !news.data ? null : (
+            ) : news.error || !news.data ? (
+              <SectionError
+                message={sectionErrorMessage(news.errorMessage)}
+                onRetry={() => run()}
+                retryLabel={retryLabel}
+              />
+            ) : (
               <NewsImpactCard
                 ranked={news.data.ranked}
                 summary={news.data.summary}
@@ -126,7 +142,13 @@ export function AIInsightsClientPanel({
 
             {research.loading ? (
               <SectionSkeleton lines={5} />
-            ) : research.error || !research.data ? null : (
+            ) : research.error || !research.data ? (
+              <SectionError
+                message={sectionErrorMessage(research.errorMessage)}
+                onRetry={() => run()}
+                retryLabel={retryLabel}
+              />
+            ) : (
               <>
                 <CardShell
                   title={zh ? "研究摘要" : "Executive Summary"}
@@ -154,7 +176,13 @@ export function AIInsightsClientPanel({
 
             {earnings.loading ? (
               <SectionSkeleton lines={4} />
-            ) : earnings.error || !earnings.data ? null : (
+            ) : earnings.error || !earnings.data ? (
+              <SectionError
+                message={sectionErrorMessage(earnings.errorMessage)}
+                onRetry={() => run()}
+                retryLabel={retryLabel}
+              />
+            ) : (
               <EarningsAnalysisCard data={earnings.data} locale={locale} />
             )}
           </>

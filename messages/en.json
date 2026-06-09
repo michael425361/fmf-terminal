@@ -436,6 +436,9 @@
     "selectSymbol": "Select a symbol to generate an AI market brief.",
     "unavailableTitle": "Brief unavailable",
     "unavailable": "AI summary temporarily unavailable",
+    "emptySummary": "No AI summary available. Click regenerate.",
+    "authRequired": "Sign in to use AI features.",
+    "retry": "Retry",
     "cached": "Cached · 5m",
     "sentimentValues": {
       "bullish": "Bullish",

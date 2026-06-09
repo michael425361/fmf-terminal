@@ -137,6 +137,13 @@ export async function POST(request: Request) {
       cached: false,
       responseText: JSON.stringify(result),
     });
+    if (!result.summary?.trim()) {
+      console.warn("[ai/market-summary] empty summary after generation", {
+        symbol,
+        market,
+        locale,
+      });
+    }
     return NextResponse.json({ ...result, locale }, {
       headers: { "Cache-Control": "private, max-age=300" },
     });

@@ -24,6 +24,14 @@ interface UseAIMarketSummaryOptions {
   enabled?: boolean;
 }
 
+type RawSummaryJson = MarketSummaryResponse & {
+  ok?: boolean;
+  error?: string;
+  content?: string;
+  analysis?: string;
+  generatedText?: string;
+};
+
 function quoteToInputFixed(quote: MarketQuote | undefined) {
   if (!quote) return null;
   return {
@@ -39,6 +47,54 @@ function quoteToInputFixed(quote: MarketQuote | undefined) {
     previousClose: quote.previousClose,
     volume: quote.volume,
     averageVolume: quote.averageVolume,
+  };
+}
+
+function normalizeMarketSummaryResponse(
+  json: RawSummaryJson,
+  res: Response,
+  fallbackMessage: string,
+  authMessage: string
+): MarketSummaryResponse {
+  if (!res.ok) {
+    const message =
+      json.message ??
+      (json.error === "auth_required" ? authMessage : json.error) ??
+      fallbackMessage;
+    return {
+      summary: "",
+      sentiment: "neutral",
+      highlights: [],
+      unavailable: true,
+      message,
+    };
+  }
+
+  const summary = (
+    json.summary ??
+    json.content ??
+    json.analysis ??
+    json.generatedText ??
+    ""
+  ).trim();
+
+  if (json.unavailable === true || !summary) {
+    return {
+      summary: "",
+      sentiment: json.sentiment ?? "neutral",
+      highlights: json.highlights ?? [],
+      unavailable: true,
+      message: json.message ?? fallbackMessage,
+      locale: json.locale,
+      cached: json.cached,
+      generatedAt: json.generatedAt,
+    };
+  }
+
+  return {
+    ...json,
+    summary,
+    unavailable: false,
   };
 }
 
@@ -141,6 +197,7 @@ export function useAIMarketSummary({
           `/api/ai/market-summary${refresh ? "?refresh=1" : ""}`,
           {
             method: "POST",
+            credentials: "include",
             headers: {
               "Content-Type": "application/json",
               "X-FMF-Locale": activeLocale,
@@ -159,12 +216,29 @@ export function useAIMarketSummary({
           }
         );
 
-        const json = (await res.json()) as MarketSummaryResponse;
+        const json = (await res.json()) as RawSummaryJson;
         if (controller.signal.aborted || requestId !== requestIdRef.current) {
           return;
         }
 
-        setData(json);
+        const normalized = normalizeMarketSummaryResponse(
+          json,
+          res,
+          t("emptySummary"),
+          t("authRequired")
+        );
+
+        if (process.env.NODE_ENV === "development") {
+          console.log("AI summary response", {
+            status: res.status,
+            ok: res.ok,
+            summary: normalized.summary?.slice(0, 80),
+            unavailable: normalized.unavailable,
+            message: normalized.message,
+          });
+        }
+
+        setData(normalized);
       } catch {
         if (controller.signal.aborted || requestId !== requestIdRef.current) {
           return;

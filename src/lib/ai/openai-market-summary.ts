@@ -18,15 +18,20 @@ function parseSentiment(raw: unknown): MarketSummarySentiment {
   return "neutral";
 }
 
+function extractSummaryText(parsed: Record<string, unknown>): string {
+  for (const key of ["summary", "content", "analysis", "generatedText"] as const) {
+    const value = parsed[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+  return "";
+}
+
 function parseModelJson(content: string): MarketSummaryResponse | null {
   try {
-    const parsed = JSON.parse(content) as {
-      summary?: string;
-      sentiment?: string;
-      highlights?: unknown;
-    };
-    const summary =
-      typeof parsed.summary === "string" ? parsed.summary.trim() : "";
+    const parsed = JSON.parse(content) as Record<string, unknown>;
+    const summary = extractSummaryText(parsed);
     if (!summary) return null;
 
     const highlights = Array.isArray(parsed.highlights)

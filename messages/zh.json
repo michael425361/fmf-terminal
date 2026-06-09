@@ -436,6 +436,9 @@
     "selectSymbol": "请选择标的以生成 AI 市场简报。",
     "unavailableTitle": "简报不可用",
     "unavailable": "AI 摘要暂时不可用",
+    "emptySummary": "暂无 AI 摘要。请点击重新生成。",
+    "authRequired": "请登录后使用 AI 功能。",
+    "retry": "重试",
     "cached": "缓存 · 5 分钟",
     "sentimentValues": {
       "bullish": "偏多",
